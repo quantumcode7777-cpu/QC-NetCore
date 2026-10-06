@@ -1,0 +1,1 @@
+Legacy 'Qonnect WiFi' Express/Prisma/Mongoose code moved out of the active tree. Not part of G-Tech OS; excluded from TypeScript/Next builds. Contains hardcoded sample admin credentials in scripts/addAdmin.js - do not run. Reference only.

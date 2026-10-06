@@ -1,0 +1,370 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* ====================================================================
+   G-TECH DESIGN TOKENS
+   One source of truth. Components consume tokens through the Tailwind
+   utilities declared in @theme below (bg-surface, text-muted-foreground,
+   border-border, ...). Avoid raw hex values in components.
+   ==================================================================== */
+
+@layer base {
+  /* ---- Light (cool neutral) ---- */
+  :root {
+    --background: #f4f6f8;
+    --foreground: #131820;
+    --card: #ffffff;
+    --card-foreground: #131820;
+    --card-inner: #f1f3f6;
+    --popover: #ffffff;
+    --popover-foreground: #131820;
+
+    --surface: #ffffff;
+    --surface-subtle: #f8f9fb;
+    --surface-elevated: #eef1f4; /* hover / muted fill */
+    --surface-secondary: #dfe4ea;
+
+    --primary: #1f5fd1;
+    --primary-foreground: #ffffff;
+    --primary-hover: #194fb0;
+    --primary-soft: #e8f0fd;
+
+    --muted: #eef1f4;
+    --muted-foreground: #566171; /* 5.9:1 on white */
+
+    --success: #15803d;
+    --success-foreground: #ffffff;
+    --success-soft: #e6f4ec;
+    --warning: #a85b00;
+    --warning-soft: #fdf1dc;
+    --danger: #b42318;
+    --danger-soft: #fdebe9;
+    --info: #1f5fd1;
+    --info-soft: #e8f0fd;
+
+    --accent: #b42318;
+    --accent-foreground: #ffffff;
+    --destructive: #b42318;
+    --destructive-foreground: #ffffff;
+
+    --border: #dde2e8;
+    --border-subtle: #e9edf1;
+    --border-strong: #c3cbd5;
+    --input: #ffffff;
+    --ring: rgba(31, 95, 209, 0.35);
+
+    /* Spacing scale (use via the padding and gap utilities; documented for reference) */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.5rem;
+
+    --radius: 0.5rem;
+    --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-pop: 0 8px 24px rgba(16, 24, 40, 0.12);
+
+    --sidebar-width: 15rem;
+    --topbar-height: 3.5rem;
+
+    --logo-nexa: #131820;
+    --logo-tech: #131820;
+    --logo-sub: #566171;
+    --logo-blue: #1f5fd1;
+  }
+
+  /* ---- Dark (slate, not pure black: easier on eyes over 8h shifts) ---- */
+  .dark {
+    --background: #0e1217;
+    --foreground: #e7eaef;
+    --card: #151a21;
+    --card-foreground: #e7eaef;
+    --card-inner: #1b212a;
+    --popover: #151a21;
+    --popover-foreground: #e7eaef;
+
+    --surface: #151a21;
+    --surface-subtle: #11161c;
+    --surface-elevated: #1c222b;
+    --surface-secondary: #2a313c;
+
+    --primary: #5b95f5;
+    --primary-foreground: #0a1220; /* dark text on bright blue */
+    --primary-hover: #7aa9f7;
+    --primary-soft: #16233b;
+
+    --muted: #1c222b;
+    --muted-foreground: #9aa4b2;
+
+    --success: #4cc38a;
+    --success-foreground: #06140d;
+    --success-soft: #11261c;
+    --warning: #e5a93d;
+    --warning-soft: #2a2110;
+    --danger: #f27470;
+    --danger-soft: #2d1514;
+    --info: #5b95f5;
+    --info-soft: #16233b;
+
+    --accent: #f27470;
+    --accent-foreground: #1a0a09;
+    --destructive: #f27470;
+    --destructive-foreground: #1a0a09;
+
+    --border: #2a313c;
+    --border-subtle: #1f2630;
+    --border-strong: #3a4350;
+    --input: #151a21;
+    --ring: rgba(91, 149, 245, 0.45);
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+    --logo-nexa: #e7eaef;
+    --logo-tech: #e7eaef;
+    --logo-sub: #9aa4b2;
+    --logo-blue: #5b95f5;
+  }
+}
+
+/* Expose tokens as Tailwind utilities. `inline` keeps them theme-switchable. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-inner: var(--card-inner);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --shadow-xs: var(--shadow-card);
+  --shadow-brand-btn: var(--shadow-card);
+}
+
+/* Static theme values: tighter radii and a single type family app-wide.
+   Overriding these retunes every existing rounded-* / font-* usage at once. */
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.625rem;
+  --font-weight-extrabold: 700;
+  --font-weight-black: 800;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: -0.006em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  letter-spacing: -0.022em;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Numbers align in tables and metrics */
+.tabular,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Scrollbars: thin, unobtrusive */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: var(--border-strong);
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Skeleton placeholder (respects reduced motion below) */
+@keyframes gt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.gt-skeleton {
+  background-color: var(--surface-elevated);
+  border-radius: var(--radius-md);
+  animation: gt-pulse 1.4s ease-in-out infinite;
+}
+
+/* QC NetCore Hero Network Globe Animations (GPU transform & opacity only) */
+@keyframes qc-globe-pan {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-160px, 0, 0); }
+}
+@keyframes qc-orbit-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes qc-stream-dash {
+  0% { stroke-dashoffset: 130; opacity: 0.2; }
+  45% { opacity: 0.85; }
+  100% { stroke-dashoffset: 0; opacity: 0.15; }
+}
+@keyframes qc-node-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.94; }
+  50% { transform: scale(1.045); opacity: 1; }
+}
+@keyframes qc-node-arrival {
+  0%, 72%, 100% { transform: scale(0.92); opacity: 0; }
+  84% { transform: scale(1.08); opacity: 0.78; }
+  94% { transform: scale(1.18); opacity: 0; }
+}
+@keyframes qc-junction-blink {
+  0%, 100% { opacity: 0.6; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.16); }
+}
+
+.qc-net-globe-pan-left {
+  animation: qc-globe-pan 32s linear infinite;
+  will-change: transform;
+}
+.qc-net-orbit-slow-left {
+  animation: qc-orbit-spin 36s linear infinite;
+}
+.qc-net-stream-left {
+  animation-name: qc-stream-dash;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-iteration-count: infinite;
+}
+.qc-net-node-pulse {
+  animation-name: qc-node-breathe;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.qc-net-node-receive {
+  animation-name: qc-node-arrival;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+}
+.qc-net-junction-pulse {
+  animation: qc-junction-blink 3.2s ease-in-out infinite;
+}
+
+/* Subtle enterprise floating motion (desktop only, 0px -> -5px -> 0px) */
+@keyframes qc-float-subtle {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -5px, 0); }
+}
+
+@keyframes qc-arch-flow {
+  0% { stroke-dashoffset: 24; opacity: 0.35; }
+  50% { opacity: 0.9; }
+  100% { stroke-dashoffset: 0; opacity: 0.35; }
+}
+
+@media (min-width: 768px) {
+  .qc-float-slow {
+    animation: qc-float-subtle 5.5s ease-in-out infinite;
+    will-change: transform;
+  }
+  .qc-float-slow-delay-1 {
+    animation: qc-float-subtle 6s ease-in-out 0.8s infinite;
+    will-change: transform;
+  }
+  .qc-float-slow-delay-2 {
+    animation: qc-float-subtle 6.5s ease-in-out 1.6s infinite;
+    will-change: transform;
+  }
+}
+
+.qc-arch-connector-flow {
+  animation: qc-arch-flow 2.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .qc-float-slow,
+  .qc-float-slow-delay-1,
+  .qc-float-slow-delay-2,
+  .qc-arch-connector-flow {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Print specific styles for Hotspot Vouchers */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .voucher-card {
+    page-break-inside: avoid;
+    border: 1px dashed #444 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+}
