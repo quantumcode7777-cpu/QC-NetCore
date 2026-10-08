@@ -35,13 +35,17 @@ export async function updateSupabaseSession(request: NextRequest) {
   const isDemoCookie = request.cookies.get("gtech_demo_mode")?.value === "true";
   const isDemoActive = isDemoQuery || isDemoCookie;
 
-  // 2. Initialize Supabase SSR client safely
+  // 2. Safely read environment variables with build-time fallbacks
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+
+  // 3. Initialize Supabase SSR client safely
   let user = null;
 
   try {
     const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {
@@ -68,7 +72,7 @@ export async function updateSupabaseSession(request: NextRequest) {
     console.error("[Middleware] Non-fatal auth session check error:", err);
   }
 
-  // 3. Protected Route Enforcement
+  // 4. Protected Route Enforcement
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
@@ -80,7 +84,7 @@ export async function updateSupabaseSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 4. Already Authenticated User Redirect (from /sign-in or /register to /dashboard)
+  // 5. Already Authenticated User Redirect (from /sign-in or /register to /dashboard)
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
   if (isAuthRoute && user && !isDemoQuery) {
     const redirectUrl = request.nextUrl.clone();
