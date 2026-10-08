@@ -23,3 +23,6 @@ yarn-error.log*
 
 # Supabase CLI (local dev containers)
 .supabase/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+.env
