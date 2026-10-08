@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database.types'
 
@@ -41,4 +42,20 @@ export async function createSupabaseServerClient() {
 // Alias export to maintain backward compatibility across your codebase
 export async function createClient() {
   return createSupabaseServerClient()
+}
+
+// Service Role Client for administrative/bypassing-RLS route handlers
+export function createSupabaseServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SERVICE_SUPABASESERVICE_KEY ||
+    'placeholder-service-key'
+
+  return createSupabaseClient<Database>(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
 }
