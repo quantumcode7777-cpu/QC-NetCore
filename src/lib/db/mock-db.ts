@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM - IN-MEMORY SEED & STATE ENGINE
+// QC NETCORE OPERATING SYSTEM - IN-MEMORY SEED & STATE ENGINE
 // Realistic production-grade sample dataset for Kenyan ISP operation
 // ====================================================================
 
@@ -40,7 +40,7 @@ export const SEED_USERS: User[] = [
   {
     id: "user-owner-01",
     organizationId: SEED_ORGANIZATION.id,
-    email: "admin@gtechisp.co.ke",
+    email: "admin@qcnetcore.internal",
     fullName: "Baraka Gackstone",
     phoneNumber: "+254712345678",
     role: "isp_owner",
@@ -50,7 +50,7 @@ export const SEED_USERS: User[] = [
   {
     id: "user-tech-01",
     organizationId: SEED_ORGANIZATION.id,
-    email: "brian.tech@gtechisp.co.ke",
+    email: "brian.tech@qcnetcore.internal",
     fullName: "Brian Kiprop",
     phoneNumber: "+254722334455",
     role: "technician",
@@ -118,7 +118,7 @@ export const SEED_ROUTERS: Router[] = [
     managementIp: "10.200.1.2",
     apiPort: 8728,
     apiSslPort: 8729,
-    username: "gtech_admin",
+    username: "qc_admin",
     routerosVersion: "v7.16.1",
     boardModel: "CCR2004-16G-2S+",
     cpuLoad: 14,
@@ -141,7 +141,7 @@ export const SEED_ROUTERS: Router[] = [
     managementIp: "10.200.1.3",
     apiPort: 8728,
     apiSslPort: 8729,
-    username: "gtech_admin",
+    username: "qc_admin",
     routerosVersion: "v7.15.3",
     boardModel: "RB5009UG+S+IN",
     cpuLoad: 28,
@@ -164,7 +164,7 @@ export const SEED_ROUTERS: Router[] = [
     managementIp: "10.200.1.4",
     apiPort: 8728,
     apiSslPort: 8729,
-    username: "gtech_admin",
+    username: "qc_admin",
     routerosVersion: "v7.14.2",
     boardModel: "RB750Gr3",
     cpuLoad: 42,

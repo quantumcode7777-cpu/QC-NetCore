@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 005: Service Plans (PPPoE & Hotspot)
 -- ====================================================================
 
@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_plans_organization_id ON plans(organization_id);
 CREATE INDEX IF NOT EXISTS idx_plans_service_type ON plans(service_type);
 CREATE INDEX IF NOT EXISTS idx_plans_is_active ON plans(is_active);
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 005: Service Plans (PPPoE & Hotspot)
 -- ====================================================================
 

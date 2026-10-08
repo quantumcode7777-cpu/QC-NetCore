@@ -3,7 +3,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 /* ====================================================================
-   G-TECH DESIGN TOKENS
+   QC NETCORE DESIGN TOKENS
    One source of truth. Components consume tokens through the Tailwind
    utilities declared in @theme below (bg-surface, text-muted-foreground,
    border-border, ...). Avoid raw hex values in components.

@@ -3,7 +3,7 @@
 All SaaS endpoints follow standard REST principles, JSON payloads, Bearer JWT authorization, and tenant scoping.
 
 ## Base URL
-- SaaS REST API: `https://api.gtechisp.co.ke/api/v1` or `/api/v1`
+- SaaS REST API: `https://api.qcnetcore.internal/api/v1` or `/api/v1`
 
 ---
 

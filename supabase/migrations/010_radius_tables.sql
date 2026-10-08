@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 010: FreeRADIUS rlm_sql Compatibility Tables
 -- Standard FreeRADIUS schema for PostgreSQL rlm_sql module.
 -- These tables are written to by FreeRADIUS and the provisioning service.

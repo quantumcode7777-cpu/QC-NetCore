@@ -87,8 +87,8 @@ export function CookieConsentBanner() {
             </div>
             <p className="text-muted-foreground leading-relaxed">
               QC NetCore uses strictly necessary cookies for authentication (`sb-*-auth-token`) and
-              functional browser storage for dark/light theme (`gtech_theme`) and isolated Demo Mode
-              testing (`gtech_demo_mode`, `qc_netcore_demo_captive_v1`). Read our{" "}
+              functional browser storage for dark/light theme (`qc_netcore_theme`) and isolated Demo Mode
+              testing (`qc_netcore_demo_mode`, `qc_netcore_demo_captive_v1`). Read our{" "}
               <Link href="/legal/cookies" className="text-primary font-semibold hover:underline">
                 Cookie Policy
               </Link>{" "}
@@ -138,7 +138,7 @@ export function CookieConsentBanner() {
               />
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Saves your dark/light theme (`gtech_theme`) and interactive Captive Portal demo
+              Saves your dark/light theme (`qc_netcore_theme`) and interactive Captive Portal demo
               customizations locally in your browser.
             </p>
           </label>

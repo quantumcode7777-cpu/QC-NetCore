@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM - SAFARICOM DARAJA M-PESA ENGINE
+// QC NETCORE OPERATING SYSTEM - SAFARICOM DARAJA M-PESA ENGINE
 // Handles Lipa Na M-Pesa Online (STK Push), C2B Paybill, & Instant Reconnection
 // ====================================================================
 

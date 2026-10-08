@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Payments Service — Data Access Layer
 // Supports Real Multi-Tenant Payment Ledgers & Demo Payment Transactions
 // ====================================================================
@@ -25,7 +25,10 @@ export class PaymentsService {
     try {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-      return cookieStore.get("gtech_demo_mode")?.value === "true";
+      return (
+        cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+        cookieStore.get("gtech_demo_mode")?.value === "true"
+      );
     } catch {
       return false;
     }

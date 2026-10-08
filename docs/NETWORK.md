@@ -52,7 +52,7 @@ When an ISP administrator registers a new router in QC NetCore, the system gener
 
 ```routeros
 # ====================================================================
-# G-TECH ISP OPERATING SYSTEM - ROUTEROS V7 AUTO-CONFIGURATION
+# QC NETCORE OPERATING SYSTEM - ROUTEROS V7 AUTO-CONFIGURATION
 # Router Identity: {{router_name}}
 # Organization: {{org_name}} (UUID: {{org_id}})
 # Generated At: {{generated_timestamp}}
@@ -61,23 +61,23 @@ When an ISP administrator registers a new router in QC NetCore, the system gener
 /system identity set name="{{router_name}}"
 
 # 1. SETUP WIREGUARD SECURE TUNNEL
-/interface wireguard add name=wg-gtech listen-port=13231 private-key="{{router_wg_private_key}}" comment="G-Tech SaaS Management Tunnel"
-/ip address add address={{router_tunnel_ip}}/24 interface=wg-gtech network=10.200.{{tenant_idx}}.0
-/interface wireguard peers add interface=wg-gtech public-key="{{saas_wg_public_key}}" endpoint-address="{{saas_gateway_host}}" endpoint-port=51820 allowed-address=10.200.{{tenant_idx}}.0/24 persistent-keepalive=25s
+/interface wireguard add name=wg-qcnetcore listen-port=13231 private-key="{{router_wg_private_key}}" comment="QC NetCore SaaS Management Tunnel"
+/ip address add address={{router_tunnel_ip}}/24 interface=wg-qcnetcore network=10.200.{{tenant_idx}}.0
+/interface wireguard peers add interface=wg-qcnetcore public-key="{{saas_wg_public_key}}" endpoint-address="{{saas_gateway_host}}" endpoint-port=51820 allowed-address=10.200.{{tenant_idx}}.0/24 persistent-keepalive=25s
 
 # 2. CONFIGURE RADIUS CLIENT & INCOMING CoA
-/radius remove [find comment="G-Tech RADIUS"]
-/radius add service=ppp,hotspot address=10.200.{{tenant_idx}}.1 secret="{{radius_secret}}" timeout=3000ms authentication-port=1812 accounting-port=1813 comment="G-Tech RADIUS"
+/radius remove [find comment~"QC NetCore RADIUS"]
+/radius add service=ppp,hotspot address=10.200.{{tenant_idx}}.1 secret="{{radius_secret}}" timeout=3000ms authentication-port=1812 accounting-port=1813 comment="QC NetCore RADIUS"
 /radius incoming set accept=yes port=3799
 
 # 3. CONFIGURE PPPoE AAA INTEGRATION
 /ppp aaa set use-radius=yes accounting=yes interim-update=5m
-/ppp profile add name="gtech-pppoe-profile" use-ipv6=no use-encryption=yes only-one=yes remote-address=pool-pppoe comment="G-Tech Standard PPPoE Profile"
+/ppp profile add name="qc-pppoe-profile" use-ipv6=no use-encryption=yes only-one=yes remote-address=pool-pppoe comment="QC NetCore Standard PPPoE Profile"
 
 # 4. CONFIGURE HOTSPOT WALLED GARDEN (FOR INSTANT M-PESA PAYMENTS)
-/ip hotspot profile add name="gtech-hotspot-profile" hotspot-address=10.10.0.1 dns-name="login.isp.local" login-by=http-chap,cookie,mac-cookie use-radius=yes radius-accounting=yes radius-interim-update=5m
+/ip hotspot profile add name="qc-hotspot-profile" hotspot-address=10.10.0.1 dns-name="login.isp.local" login-by=http-chap,cookie,mac-cookie use-radius=yes radius-accounting=yes radius-interim-update=5m
 /ip hotspot walled-garden ip add dst-host="*.safaricom.co.ke" action=accept comment="Allow Safaricom M-Pesa callbacks"
-/ip hotspot walled-garden ip add dst-host="*.gtechisp.co.ke" action=accept comment="Allow G-Tech SaaS portal"
+/ip hotspot walled-garden ip add dst-host="*.your-isp-domain.com" action=accept comment="Allow QC NetCore SaaS portal"
 
 # 5. CONFIGURE REST / API SECURE SERVICE ACCESS (RESTRICTED TO WIREGUARD)
 /ip service set api address=10.200.{{tenant_idx}}.0/24 disabled=no port=8728

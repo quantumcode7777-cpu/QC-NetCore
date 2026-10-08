@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM - MIKROTIK ROUTEROS SERVICE ENGINE
+// QC NETCORE OPERATING SYSTEM - MIKROTIK ROUTEROS SERVICE ENGINE
 // Handles RouterOS API / REST execution, health telemetry, and CoA
 // ====================================================================
 
@@ -33,12 +33,25 @@ export interface LiveInterfaceMetric {
 
 export class MikroTikService {
   /**
-   * Tests API connectivity to a MikroTik Router
+   * Tests API connectivity to a MikroTik Router.
+   * NOTE: Demo mode simulates handshake; production mode strictly refuses
+   * to fabricate telemetry or fake success without a live RouterOS link.
    */
-  static async testConnection(router: Router): Promise<{ success: boolean; latencyMs: number; message: string; stats?: RouterHealthStats }> {
+  static async testConnection(
+    router: Router,
+    isDemo = false
+  ): Promise<{ success: boolean; latencyMs: number; message: string; stats?: RouterHealthStats }> {
+    if (!isDemo) {
+      return {
+        success: false,
+        latencyMs: -1,
+        message: `Real-time management tunnel handshake to ${router.name} (${router.managementIp}) is pending live RouterOS session.`,
+      };
+    }
+
     const startTime = Date.now();
     try {
-      // Simulate real-time ping / API handshake over WireGuard tunnel
+      // Demo mode only: Simulate handshake over WireGuard tunnel
       await new Promise((resolve) => setTimeout(resolve, 85));
       const latencyMs = Date.now() - startTime;
 
@@ -58,7 +71,7 @@ export class MikroTikService {
       return {
         success: true,
         latencyMs,
-        message: `Successfully connected to ${router.name} (${router.managementIp}) via ${router.connectionType}`,
+        message: `[Demo] Successfully simulated connection to ${router.name} (${router.managementIp})`,
         stats,
       };
     } catch (error: unknown) {
@@ -114,7 +127,7 @@ export class MikroTikService {
         txErrors: 0,
       },
       {
-        name: "wg-gtech",
+        name: "wg-qcnetcore",
         type: "wireguard",
         macAddress: "00:00:00:00:00:00",
         running: true,

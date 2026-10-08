@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Next.js Middleware
 // Refreshes Supabase Auth sessions on every request.
 // Preserves all existing routes and does not enforce auth redirects

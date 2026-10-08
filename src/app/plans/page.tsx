@@ -90,7 +90,7 @@ export default function PlansPage() {
 
     const newPlan: ServicePlan = {
       id: `plan-${Date.now()}`,
-      organizationId: "org-gtech-kenya-01",
+      organizationId: "org-qc-netcore-01",
       name: name.trim(),
       serviceType,
       downloadSpeedKbps: downKbps,

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       // Persist the payment server-side via service_role
       // This never reaches the browser — it's a server-to-server callback
       await PaymentsService.recordMpesaPayment({
-        organizationId: "org-gtech-kenya-01", // TODO: resolve from account reference
+        organizationId: "org-qc-netcore-01", // TODO: resolve from account reference
         amount: result.amount,
         transactionReference: result.receiptNumber,
         msisdnPhone: result.phoneNumber,

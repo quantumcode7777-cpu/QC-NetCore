@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { GTechLogo } from "./GTechLogo";
+import { QCNetCoreLogo } from "./GTechLogo";
 
 // Compatibility wrapper: existing pages import `NexaNetLogo` / `NexaNetIcon`.
-// Both now render the G-Tech brand so every screen shows one identity.
-// New code should import GTechLogo directly.
+// Both now render the QC NetCore brand so every screen shows one identity.
+// New code should import QCNetCoreLogo directly.
 
 interface NexaNetLogoProps {
   variant?: "full" | "stacked" | "horizontal" | "compact" | "icon";
@@ -15,9 +15,9 @@ interface NexaNetLogoProps {
 }
 
 export function NexaNetIcon({ className }: { className?: string }) {
-  return <GTechLogo showText={false} className={className} />;
+  return <QCNetCoreLogo showText={false} className={className} />;
 }
 
 export function NexaNetLogo({ variant = "horizontal", size = "md", className }: NexaNetLogoProps) {
-  return <GTechLogo showText={variant !== "icon"} size={size} className={className} />;
+  return <QCNetCoreLogo showText={variant !== "icon"} size={size} className={className} />;
 }

@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Revenue Aggregation & Axis Utilities
 // Shared between server API routes and client dashboard components.
 // ====================================================================

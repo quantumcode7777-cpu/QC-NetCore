@@ -17,7 +17,9 @@ const SUPABASE_READY = Boolean(
 
 export async function GET() {
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+  const isDemo =
+    cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+    cookieStore.get("gtech_demo_mode")?.value === "true";
 
   if (isDemo) {
     const state = getOrCreateTenantSmsState(SEED_ORGANIZATION.id, true);
@@ -148,7 +150,9 @@ export async function PATCH(req: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+  const isDemo =
+    cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+    cookieStore.get("gtech_demo_mode")?.value === "true";
 
   if (isDemo || !SUPABASE_READY) {
     const state = getOrCreateTenantSmsState(SEED_ORGANIZATION.id, true);
@@ -258,7 +262,9 @@ export async function POST(req: NextRequest) {
 
   const action = String(body.action || "SEND_OTP").toUpperCase();
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+  const isDemo =
+    cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+    cookieStore.get("gtech_demo_mode")?.value === "true";
 
   let orgId = SEED_ORGANIZATION.id;
   let userId = "demo-operator";

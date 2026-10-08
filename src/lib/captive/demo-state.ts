@@ -57,7 +57,7 @@ export interface DemoCaptiveState {
 export const DEFAULT_DEMO_PORTAL_SETTINGS: DemoPortalSettings = {
   defaultCurrency: "KES",
   sessionTimeoutDisplay: "Match Package Validity",
-  redirectUrlAfterLogin: "https://g-tech-isp-billing-system.vercel.app/captive",
+  redirectUrlAfterLogin: "https://qc-netcore.vercel.app/captive",
   showSupportContact: true,
   showTermsAndConditions: true,
   showPromotionalBanner: true,

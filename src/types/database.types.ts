@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Supabase Database TypeScript Types
 // 
 // Generated from the database schema to ensure type safety across

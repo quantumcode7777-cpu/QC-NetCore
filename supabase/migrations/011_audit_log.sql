@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 011: Audit Log
 -- Immutable audit trail for all critical administrative actions.
 -- ====================================================================

@@ -106,7 +106,7 @@ To guarantee resilience, high transaction throughput, and absolute isolation bet
 ## 3. High-Level Directory & Project Layout
 
 ```
-G-Tech-ISP/
+QC-NetCore/
 ├── .github/                      # CI/CD Workflows & automated lint/testing
 ├── docs/                         # Comprehensive Architectural Blueprints
 │   ├── ARCHITECTURE.md

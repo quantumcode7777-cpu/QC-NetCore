@@ -160,8 +160,8 @@ export default function CustomersPage() {
     if (isDemoMode) {
       const newCustomer: Customer = {
         id: `cust-${Date.now()}`,
-        organizationId: "org-gtech-kenya-01",
-        accountNumber: `GT-${Math.floor(1000 + Math.random() * 9000)}`,
+        organizationId: "org-qc-netcore-01",
+        accountNumber: `QC-${Math.floor(1000 + Math.random() * 9000)}`,
         fullName,
         phoneNumber,
         email,

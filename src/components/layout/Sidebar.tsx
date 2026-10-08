@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-context";
-import { GTechLogo } from "@/components/ui/GTechLogo";
+import { QCNetCoreLogo } from "@/components/ui/GTechLogo";
 import { ALL_NAV_ITEMS } from "./nav";
 
 const SIDEBAR_STORAGE_KEY = "qc_netcore_sidebar_collapsed";
@@ -84,7 +84,7 @@ export function Sidebar({
           title="QC NetCore Dashboard"
           className="rounded-md min-w-0"
         >
-          <GTechLogo
+          <QCNetCoreLogo
             showText={!isCollapsed}
             size={isCollapsed ? "sm" : "md"}
           />

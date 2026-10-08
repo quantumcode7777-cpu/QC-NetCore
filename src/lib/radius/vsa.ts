@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM - FREERADIUS VSA & SQL MAPPER
+// QC NETCORE OPERATING SYSTEM - FREERADIUS VSA & SQL MAPPER
 // Generates MikroTik Vendor-Specific Attributes & FreeRADIUS rlm_sql entries
 // ====================================================================
 

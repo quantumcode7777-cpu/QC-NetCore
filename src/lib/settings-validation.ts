@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Organization Settings Validation
 // Shared between client forms, API route handlers, and unit tests.
 // ====================================================================

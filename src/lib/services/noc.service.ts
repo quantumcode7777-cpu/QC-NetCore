@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // NOC Statistics Service — Data Access Layer
 // Supports Real Multi-Tenant Database Metrics & Demo Dataset Isolation
 // ====================================================================
@@ -20,7 +20,10 @@ export class NOCService {
     try {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-      return cookieStore.get("gtech_demo_mode")?.value === "true";
+      return (
+        cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+        cookieStore.get("gtech_demo_mode")?.value === "true"
+      );
     } catch {
       return false;
     }

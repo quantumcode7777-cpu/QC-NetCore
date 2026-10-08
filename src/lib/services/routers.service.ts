@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Routers Service — Data Access Layer
 // Supports Real Multi-Tenant Database & Isolated Demo Fleet
 // ====================================================================
@@ -43,7 +43,10 @@ export class RoutersService {
     try {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-      return cookieStore.get("gtech_demo_mode")?.value === "true";
+      return (
+        cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+        cookieStore.get("gtech_demo_mode")?.value === "true"
+      );
     } catch {
       return false;
     }
@@ -57,7 +60,7 @@ export class RoutersService {
     }
 
     if (!SUPABASE_READY) {
-      return { data: [], error: null, count: 0 };
+      return { data: null, error: "Database service is not configured or unavailable." };
     }
 
     try {
@@ -68,26 +71,27 @@ export class RoutersService {
         data: { user },
       } = await supabase.auth.getUser();
 
-      let orgId: string | undefined;
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("organization_id")
-          .eq("id", user.id)
-          .maybeSingle();
-        orgId = profile?.organization_id ?? undefined;
+      if (!user) {
+        return { data: null, error: "Your session has expired. Please sign in again." };
       }
 
-      let query = supabase
+      const { data: profile, error: profileErr } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileErr || !profile?.organization_id) {
+        return { data: null, error: "Your account is not associated with an active organization." };
+      }
+
+      const orgId = profile.organization_id;
+
+      const { data, error, count } = await supabase
         .from("routers")
         .select(SAFE_ROUTER_COLUMNS, { count: "exact" })
+        .eq("organization_id", orgId)
         .order("name", { ascending: true });
-
-      if (orgId) {
-        query = query.eq("organization_id", orgId);
-      }
-
-      const { data, error, count } = await query;
 
       if (error) {
         const appError = handleSupabaseError(error, "routers.list");

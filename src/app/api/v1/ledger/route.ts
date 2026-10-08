@@ -26,7 +26,9 @@ import { loadLiveOrDemoCopilotEnvironment } from "@/lib/ai/live-data-loader";
 
 export async function GET() {
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+  const isDemo =
+    cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+    cookieStore.get("gtech_demo_mode")?.value === "true";
 
   if (isDemo) {
     const journalEntries = getSeedJournalEntries();

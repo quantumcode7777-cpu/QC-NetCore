@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 003: User Profiles (linked to Supabase Auth)
 -- Extends auth.users with ISP-domain attributes
 -- ====================================================================

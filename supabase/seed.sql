@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM - DEVELOPMENT SEED DATA
+-- QC NETCORE OPERATING SYSTEM - DEVELOPMENT SEED DATA
 -- Safe development/demo dataset. NO real credentials or PII.
 -- Run ONLY in development/staging environments.
 -- ====================================================================
@@ -12,10 +12,10 @@
 INSERT INTO organizations (id, name, slug, business_number, email, phone, currency, timezone, billing_cycle_type, grace_period_days)
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
-    'G-Tech Fiber & Wireless Networks Ltd',
-    'g-tech-kenya',
+    'QC NetCore Networks Ltd',
+    'qc-netcore-kenya',
     'BN-2024-9812',
-    'support@gtechisp.co.ke',
+    'support@qcnetcore.internal',
     '+254712345678',
     'KES',
     'Africa/Nairobi',

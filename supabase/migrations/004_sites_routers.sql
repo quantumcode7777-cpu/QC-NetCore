@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 004: Network Sites & MikroTik Routers
 -- ====================================================================
 

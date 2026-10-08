@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Customer Service — Data Access Layer
 // Supports Real Multi-Tenant Supabase Data & Isolated Demo Mode
 // ====================================================================
@@ -37,7 +37,10 @@ export class CustomerService {
     try {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-      return cookieStore.get("gtech_demo_mode")?.value === "true";
+      return (
+        cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+        cookieStore.get("gtech_demo_mode")?.value === "true"
+      );
     } catch {
       return false;
     }
@@ -154,8 +157,8 @@ export class CustomerService {
     if (isDemo || !SUPABASE_READY) {
       const newCustomer: Customer = {
         id: `cust-${Date.now()}`,
-        organizationId: "org-gtech-kenya-01",
-        accountNumber: `GT-${Math.floor(1000 + Math.random() * 9000)}`,
+        organizationId: "org-qc-netcore-01",
+        accountNumber: `QC-${Math.floor(1000 + Math.random() * 9000)}`,
         fullName: input.fullName,
         phoneNumber: input.phoneNumber,
         altPhoneNumber: input.altPhoneNumber,

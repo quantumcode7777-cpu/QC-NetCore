@@ -601,7 +601,7 @@ export default function HomePage() {
             variant="fade-up"
             className="mt-12 md:mt-16 max-w-5xl mx-auto"
           >
-            <WindowFrame urlPreview="g-tech-isp-billing-system.vercel.app/noc-live">
+            <WindowFrame urlPreview="qc-netcore.vercel.app/noc-live">
               <StaggerContainer
                 staggerMs={80}
                 className="p-4 sm:p-6 bg-surface space-y-6"

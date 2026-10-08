@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("gtech_theme") as Theme | null;
+      const stored = (localStorage.getItem("qc_netcore_theme") || localStorage.getItem("gtech_theme")) as Theme | null;
       if (stored === "light" || stored === "dark") {
         setThemeState(stored);
         applyTheme(stored);
@@ -49,7 +49,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme);
     applyTheme(newTheme);
     try {
-      localStorage.setItem("gtech_theme", newTheme);
+      localStorage.setItem("qc_netcore_theme", newTheme);
     } catch (e) {}
   };
 

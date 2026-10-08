@@ -150,7 +150,7 @@ test("Tenant resolution — slug, custom domain readiness, platform hosts ignore
   assert.deepEqual(resolveTenantKey({ org: "Alpha-Net" }), { type: "slug", value: "alpha-net" });
   assert.equal(resolveTenantKey({ org: "bad slug!" }), null);
   assert.deepEqual(resolveTenantKey({ host: "wifi.exampleisp.co.ke:443" }), { type: "domain", value: "wifi.exampleisp.co.ke" });
-  assert.equal(resolveTenantKey({ host: "g-tech-isp-billing-system.vercel.app" }), null);
+  assert.equal(resolveTenantKey({ host: "qc-netcore.vercel.app" }), null);
   assert.equal(resolveTenantKey({ host: "localhost:3000" }), null);
   // explicit slug wins over host
   assert.equal(resolveTenantKey({ org: "alpha", host: "wifi.exampleisp.co.ke" }).type, "slug");

@@ -88,9 +88,9 @@ test("Revenue Y-Axis Tick Generator — handles zero, medium, and large values",
 
 test("Organization Settings Validator — accepts valid payload and rejects invalid/unknown fields", () => {
   const valid = validateOrganizationSettingsInput({
-    name: "G-Tech ISP Ltd",
+    name: "QC NetCore Ltd",
     business_number: "4084200",
-    email: "noc@gtech.co.ke",
+    email: "noc@qcnetcore.internal",
     phone: "+254 700 123456",
     currency: "KES",
     timezone: "Africa/Nairobi",
@@ -98,12 +98,12 @@ test("Organization Settings Validator — accepts valid payload and rejects inva
     grace_period_days: 2,
   });
   assert.equal(valid.valid, true);
-  assert.equal(valid.data?.name, "G-Tech ISP Ltd");
+  assert.equal(valid.data?.name, "QC NetCore Ltd");
   assert.equal(valid.data?.currency, "KES");
 
   const unknownField = validateOrganizationSettingsInput({
-    name: "G-Tech ISP Ltd",
-    email: "noc@gtech.co.ke",
+    name: "QC NetCore Ltd",
+    email: "noc@qcnetcore.internal",
     phone: "+254700123456",
     currency: "KES",
     timezone: "Africa/Nairobi",

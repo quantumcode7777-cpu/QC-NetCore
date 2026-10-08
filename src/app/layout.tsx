@@ -12,10 +12,10 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/gtech-icon.png", type: "image/png", sizes: "400x400" },
+      { url: "/qc-icon.png", type: "image/png", sizes: "400x400" },
     ],
-    shortcut: "/gtech-icon.png",
-    apple: "/gtech-icon.png",
+    shortcut: "/qc-icon.png",
+    apple: "/qc-icon.png",
   },
 };
 
@@ -46,7 +46,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const t = localStorage.getItem('gtech_theme');
+                const t = localStorage.getItem('qc_netcore_theme') || localStorage.getItem('gtech_theme');
                 if (t === 'light') {
                   document.documentElement.classList.remove('dark');
                   document.documentElement.classList.add('light');

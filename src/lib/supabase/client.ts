@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Supabase Browser Client
 // Use this ONLY in Client Components ('use client').
 // Never use this for privileged/server-only operations.

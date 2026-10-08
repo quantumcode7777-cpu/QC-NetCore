@@ -1,4 +1,4 @@
-# Supabase local development configuration for G-Tech ISP OS
+# Supabase local development configuration for QC NetCore
 # Run `supabase start` to launch the local development stack.
 # See: https://supabase.com/docs/guides/local-development
 
@@ -108,8 +108,8 @@ max_frequency = "1s"
 # port = 587
 # user = "apikey"
 # pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@gtechisp.co.ke"
-# sender_name = "G-Tech ISP"
+# admin_email = "admin@qcnetcore.internal"
+# sender_name = "QC NetCore"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -122,7 +122,7 @@ enable_signup = false
 # If enabled, users need to confirm their sms number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
-template = "Your G-Tech ISP code is {{ .Code }}"
+template = "Your QC NetCore code is {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
 max_frequency = "5s"
 

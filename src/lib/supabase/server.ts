@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Supabase Server Client
 // Use this in Server Components, Route Handlers, and Server Actions.
 // Reads the auth session from cookies automatically.

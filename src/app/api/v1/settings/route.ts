@@ -35,7 +35,7 @@ function verifyServerIntegrations(): void {
   );
 
   if (process.env.NODE_ENV === "development") {
-    console.info("[G-Tech ISP] Server integration check:", {
+    console.info("[QC NetCore] Server integration check:", {
       supabaseReady: SUPABASE_READY,
       mpesaConfigured,
       gatewayConfigured,
@@ -67,7 +67,9 @@ export async function GET() {
   verifyServerIntegrations();
 
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+  const isDemo =
+    cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+    cookieStore.get("gtech_demo_mode")?.value === "true";
 
   if (isDemo) {
     return NextResponse.json({
@@ -180,7 +182,9 @@ export async function PATCH(req: NextRequest) {
   verifyServerIntegrations();
 
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+  const isDemo =
+    cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+    cookieStore.get("gtech_demo_mode")?.value === "true";
 
   if (isDemo) {
     const msg = "Sign in to an administrator account to save changes.";
@@ -338,7 +342,7 @@ export async function PATCH(req: NextRequest) {
         user_agent: req.headers.get("user-agent") ?? null,
       });
     } catch (auditErr) {
-      console.error("[G-Tech ISP] Audit log insert failed:", auditErr);
+      console.error("[QC NetCore] Audit log insert failed:", auditErr);
     }
 
     return NextResponse.json({

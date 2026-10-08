@@ -32,7 +32,10 @@ export function jsonError(status: number, code: string, message: string, extra?:
 export async function isDemoRequest(): Promise<boolean> {
   try {
     const store = await cookies();
-    return store.get("gtech_demo_mode")?.value === "true";
+    return (
+      store.get("qc_netcore_demo_mode")?.value === "true" ||
+      store.get("gtech_demo_mode")?.value === "true"
+    );
   } catch {
     return false;
   }

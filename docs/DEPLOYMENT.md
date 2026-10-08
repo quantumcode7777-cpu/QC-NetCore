@@ -48,14 +48,14 @@ version: '3.8'
 services:
   freeradius:
     image: freeradius/freeradius-server:latest
-    container_name: gtech_freeradius
+    container_name: qc_freeradius
     restart: unless-stopped
     ports:
       - "1812:1812/udp" # RADIUS Authentication
       - "1813:1813/udp" # RADIUS Accounting
       - "3799:3799/udp" # RADIUS CoA / Disconnect
     environment:
-      - DATABASE_URL=postgresql://radius_user:secret_pass@db-host:5432/gtech_isp
+      - DATABASE_URL=postgresql://radius_user:secret_pass@db-host:5432/qc_netcore
     volumes:
       - ./freeradius/mods-available/sql:/etc/raddb/mods-available/sql
       - ./freeradius/sites-available/default:/etc/raddb/sites-available/default
@@ -63,7 +63,7 @@ services:
 
   wireguard-gateway:
     image: linuxserver/wireguard:latest
-    container_name: gtech_wireguard
+    container_name: qc_wireguard
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -72,7 +72,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Nairobi
-      - SERVERURL=vpn.gtechisp.co.ke
+      - SERVERURL=vpn.your-isp-domain.com
       - SERVERPORT=51820
       - PEERS=500
       - PEERDNS=1.1.1.1
@@ -95,7 +95,7 @@ services:
 ```bash
 # APPLICATION
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://app.gtechisp.co.ke
+NEXT_PUBLIC_APP_URL=https://app.your-isp-domain.com
 APP_ENCRYPTION_KEY=super_secret_32_byte_hex_key_for_aes_gcm
 
 # DATABASE (PostgreSQL / Supabase)
@@ -105,9 +105,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # NETWORK CONTROL GATEWAY
-NETWORK_GATEWAY_URL=http://network-core.gtechisp.internal:8000
+NETWORK_GATEWAY_URL=http://network-core.qcnetcore.internal:8000
 NETWORK_GATEWAY_SECRET=secret_internal_jwt_key
-WIREGUARD_PUBLIC_ENDPOINT=vpn.gtechisp.co.ke:51820
+WIREGUARD_PUBLIC_ENDPOINT=vpn.your-isp-domain.com:51820
 WIREGUARD_SERVER_PUBLIC_KEY=aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890=
 
 # SAFARICOM DARAJA M-PESA (Default sandbox for onboarding)
@@ -121,5 +121,5 @@ DARAJA_SHORTCODE=174379
 SMS_PROVIDER=africastalking
 AFRICASTALKING_USERNAME=sandbox
 AFRICASTALKING_API_KEY=YOUR_API_KEY
-AFRICASTALKING_SENDER_ID=GTECH_ISP
+AFRICASTALKING_SENDER_ID=QCNetCore
 ```

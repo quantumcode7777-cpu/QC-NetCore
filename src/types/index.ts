@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM - SHARED DOMAIN TYPES
+// QC NETCORE OPERATING SYSTEM - SHARED DOMAIN TYPES
 // ====================================================================
 
 export type UserRole =

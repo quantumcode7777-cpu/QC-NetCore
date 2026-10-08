@@ -8,7 +8,7 @@
   "theme_color": "#0284c7",
   "icons": [
     {
-      "src": "/gtech-icon.png",
+      "src": "/qc-icon.png",
       "sizes": "400x400",
       "type": "image/png"
     },

@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Supabase Middleware & Route Guard
 // Refreshes session and protects dashboard routes gracefully.
 // Never throws 500 errors.
@@ -32,7 +32,9 @@ export async function updateSupabaseSession(request: NextRequest) {
 
   // 1. Check Demo Mode indicators (query param or cookie)
   const isDemoQuery = request.nextUrl.searchParams.get("demo") === "true";
-  const isDemoCookie = request.cookies.get("gtech_demo_mode")?.value === "true";
+  const isDemoCookie =
+    request.cookies.get("qc_netcore_demo_mode")?.value === "true" ||
+    request.cookies.get("gtech_demo_mode")?.value === "true";
   const isDemoActive = isDemoQuery || isDemoCookie;
 
   // 2. Initialize Supabase SSR client safely

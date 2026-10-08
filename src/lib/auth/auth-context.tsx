@@ -30,7 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   refreshAuth: async () => {},
 });
 
-const DEMO_COOKIE_NAME = "gtech_demo_mode";
+const DEMO_COOKIE_NAME = "qc_netcore_demo_mode";
 
 function setCookie(name: string, value: string, days = 7) {
   if (typeof document === "undefined") return;
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (err) {
-      console.error("[G-Tech Auth] Error loading profile:", err);
+      console.error("[QC NetCore Auth] Error loading profile:", err);
     }
   };
 
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if URL has ?demo=true or cookie is set
       const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
       const hasDemoQuery = urlParams?.get("demo") === "true";
-      const hasDemoCookie = getCookie(DEMO_COOKIE_NAME) === "true";
+      const hasDemoCookie = getCookie(DEMO_COOKIE_NAME) === "true" || getCookie("gtech_demo_mode") === "true";
 
       if (hasDemoQuery || hasDemoCookie) {
         setIsDemoMode(true);
@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setIsDemoMode(false);
         deleteCookie(DEMO_COOKIE_NAME);
+        deleteCookie("gtech_demo_mode");
         await loadUserData(session.user);
       } else {
         setUser(null);
@@ -122,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganization(null);
       }
     } catch (err) {
-      console.error("[G-Tech Auth] Error initializing auth session:", err);
+      console.error("[QC NetCore Auth] Error initializing auth session:", err);
     } finally {
       setIsLoading(false);
     }
@@ -161,12 +162,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const exitDemoMode = () => {
     deleteCookie(DEMO_COOKIE_NAME);
+    deleteCookie("gtech_demo_mode");
     setIsDemoMode(false);
     router.replace("/");
   };
 
   const signOut = async () => {
     deleteCookie(DEMO_COOKIE_NAME);
+    deleteCookie("gtech_demo_mode");
     setIsDemoMode(false);
     await supabase.auth.signOut();
     setUser(null);

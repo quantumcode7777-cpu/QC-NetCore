@@ -18,7 +18,7 @@ const SIZE_CLASSES: Record<NonNullable<GTechLogoProps["size"]>, string> = {
 
 /**
  * QC NetCore official brand logo and network icon.
- * Uses the official transparent G-Tech network mark (/gtech-icon.png) without any background box.
+ * Uses the official transparent QC NetCore network mark (/qc-icon.png) without any background box.
  */
 export function GTechLogo({
   className,
@@ -29,7 +29,7 @@ export function GTechLogo({
   if (!showText) {
     return (
       <img
-        src="/gtech-icon.png"
+        src="/qc-icon.png"
         alt="QC NetCore"
         width={28}
         height={28}
@@ -48,7 +48,7 @@ export function GTechLogo({
   return (
     <span className={cn("inline-flex items-center gap-2.5 select-none", className)}>
       <img
-        src="/gtech-icon.png"
+        src="/qc-icon.png"
         alt=""
         aria-hidden="true"
         width={28}
@@ -67,4 +67,7 @@ export function GTechLogo({
     </span>
   );
 }
+
+export type QCNetCoreLogoProps = GTechLogoProps;
+export const QCNetCoreLogo = GTechLogo;
 

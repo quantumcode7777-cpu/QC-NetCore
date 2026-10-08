@@ -5,7 +5,7 @@
 // - LIVE_TENANT_DATA: Real PostgreSQL records queried via Supabase with RLS
 //   and explicit organization_id scoping for the authenticated tenant.
 // - DEMO_DATA: Isolated demonstration dataset used only when the operator is
-//   explicitly running in Demo Mode (?demo=true / gtech_demo_mode=true).
+//   explicitly running in Demo Mode (?demo=true / qc_netcore_demo_mode=true).
 // ============================================================================
 
 import type {
@@ -153,7 +153,9 @@ export async function loadLiveOrDemoCopilotEnvironment(options?: {
     try {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-      isDemo = cookieStore.get("gtech_demo_mode")?.value === "true";
+      isDemo =
+        cookieStore.get("qc_netcore_demo_mode")?.value === "true" ||
+        cookieStore.get("gtech_demo_mode")?.value === "true";
     } catch {
       isDemo = false;
     }

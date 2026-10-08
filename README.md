@@ -25,8 +25,8 @@ It integrates:
 
 ### 1. Installation
 ```bash
-git clone https://github.com/gtech-isp/gtech-isp-os.git
-cd "G Tech ISP"
+git clone https://github.com/quantumcode7777-cpu/QC-NetCore.git
+cd "QC NetCore"
 npm install
 ```
 

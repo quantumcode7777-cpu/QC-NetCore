@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM - VOUCHER BATCH ENGINE
+// QC NETCORE OPERATING SYSTEM - VOUCHER BATCH ENGINE
 // Generates cryptographically secure, non-colliding Hotspot codes
 // ====================================================================
 

@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 008: Billing — Invoices & Payments
 -- All monetary values stored as DECIMAL(12,2) — never floating point.
 -- ====================================================================

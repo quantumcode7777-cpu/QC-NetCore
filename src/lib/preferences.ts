@@ -6,13 +6,17 @@ export const ALLOWED_PAGE_SIZES = [10, 25, 50, 100] as const;
 export type PageSizeOption = (typeof ALLOWED_PAGE_SIZES)[number];
 
 export const DEFAULT_PAGE_SIZE: PageSizeOption = 25;
-const STORAGE_KEY = "gtech_page_size";
-const EVENT_NAME = "gtech:preferences-changed";
+const STORAGE_KEY = "qc_netcore_page_size";
+const LEGACY_STORAGE_KEY = "gtech_page_size";
+const EVENT_NAME = "qc_netcore:preferences-changed";
 
 export function getStoredPageSize(): PageSizeOption {
   if (typeof window === "undefined") return DEFAULT_PAGE_SIZE;
   try {
-    const raw = Number(window.localStorage.getItem(STORAGE_KEY));
+    const raw = Number(
+      window.localStorage.getItem(STORAGE_KEY) ||
+      window.localStorage.getItem(LEGACY_STORAGE_KEY)
+    );
     if (ALLOWED_PAGE_SIZES.includes(raw as PageSizeOption)) {
       return raw as PageSizeOption;
     }

@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM - MIGRATION 001: CORE SCHEMA & RADIUS
+-- QC NETCORE OPERATING SYSTEM - MIGRATION 001: CORE SCHEMA & RADIUS
 -- ====================================================================
 
 -- 1. Extensions

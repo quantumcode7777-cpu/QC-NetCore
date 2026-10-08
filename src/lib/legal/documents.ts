@@ -370,8 +370,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentSlug, LegalDocument> = {
         ],
         bullets: [
           "Supabase Auth Session Cookies (`sb-*-auth-token`): Strictly necessary HTTP/browser cookies used to maintain authenticated ISP operator sessions and enforce Row-Level Security.",
-          "Demo Mode Session Cookie (`gtech_demo_mode`): Functional cookie set when you click 'Explore Demo' or visit a `?demo=true` route, allowing you to explore the full operator dashboard with realistic sample telemetry without requiring login.",
-          "Theme Preference (`gtech_theme` in localStorage): Stores your chosen interface appearance (`dark` or `light`) so the platform renders without visual flash on page reload.",
+          "Demo Mode Session Cookie (`qc_netcore_demo_mode`): Functional cookie set when you click 'Explore Demo' or visit a `?demo=true` route, allowing you to explore the full operator dashboard with realistic sample telemetry without requiring login.",
+          "Theme Preference (`qc_netcore_theme` in localStorage): Stores your chosen interface appearance (`dark` or `light`) so the platform renders without visual flash on page reload.",
           "Isolated Captive Portal Demo State (`qc_netcore_demo_captive_v1` in localStorage): Stores temporary branding and package customizations made inside the interactive Captive Portal Demo Customizer so your browser preview updates live without altering production tenant records.",
           "Cookie Notice Acknowledgment (`qc_netcore_cookie_consent_v1` in localStorage): Remembers your acknowledgment or preference selection on the QC NetCore cookie notice banner.",
         ],

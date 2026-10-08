@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let organizationId = "org-gtech-kenya-01";
+    let organizationId = "org-qc-netcore-01";
     try {
       const { createSupabaseServerClient } = await import("@/lib/supabase/server");
       const supabase = await createSupabaseServerClient();

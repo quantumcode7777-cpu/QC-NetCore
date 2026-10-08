@@ -1,5 +1,5 @@
 // ====================================================================
-// G-TECH ISP OPERATING SYSTEM
+// QC NETCORE OPERATING SYSTEM
 // Centralized Error Handler & Safe Message Classifier
 // Converts database, auth, and runtime errors into short, human-readable
 // messages. NEVER expose SQL errors, stack traces, env vars, or internals.
@@ -69,7 +69,7 @@ export function handleSupabaseError(
     const pgError = error as PostgrestError;
 
     // Log technical details server-side only
-    console.error(`[G-Tech ISP] Database error in ${context}:`, {
+    console.error(`[QC NetCore] Database error in ${context}:`, {
       code: pgError.code,
       message: pgError.message,
       details: pgError.details,
@@ -86,7 +86,7 @@ export function handleSupabaseError(
     };
   }
 
-  console.error(`[G-Tech ISP] Error in ${context}:`, error);
+  console.error(`[QC NetCore] Error in ${context}:`, error);
 
   return {
     userMessage: getContextualMessage(context),

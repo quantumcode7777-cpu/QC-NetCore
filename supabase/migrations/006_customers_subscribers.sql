@@ -1,5 +1,5 @@
 -- ====================================================================
--- G-TECH ISP OPERATING SYSTEM
+-- QC NETCORE OPERATING SYSTEM
 -- Migration 006: Customers, PPPoE Accounts & Subscriptions
 -- ====================================================================
 

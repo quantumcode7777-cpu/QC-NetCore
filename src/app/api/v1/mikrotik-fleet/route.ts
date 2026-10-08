@@ -7,9 +7,15 @@ export async function GET() {
   const result = await RoutersService.list();
 
   if (result.error && !result.data) {
+    const isAuth =
+      result.error.toLowerCase().includes("session") ||
+      result.error.toLowerCase().includes("sign in") ||
+      result.error.toLowerCase().includes("unauthenticated") ||
+      result.error.toLowerCase().includes("permission");
+
     return NextResponse.json(
       { success: false, error: result.error },
-      { status: 503 }
+      { status: isAuth ? 401 : 503 }
     );
   }
 
