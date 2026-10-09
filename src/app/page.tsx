@@ -614,7 +614,7 @@ export default function HomePage() {
                       <div className="text-xl sm:text-2xl font-extrabold text-foreground mt-1">
                         <AnimatedNumber value={1428} formatCommas={true} />
                       </div>
-                      <div className="text-[10px] font-bold text-emerald-500 mt-0.5">↑ 12% this month</div>
+                      <div className="text-[10px] font-bold text-success dark:text-emerald-400 mt-0.5">↑ 12% this month</div>
                     </div>
                   </StaggerItem>
                   <StaggerItem index={1} variant="metric-card">
@@ -623,7 +623,7 @@ export default function HomePage() {
                       <div className="text-xl sm:text-2xl font-extrabold text-foreground mt-1">
                         <AnimatedNumber value={2.45} prefix="KES " suffix="M" decimals={2} />
                       </div>
-                      <div className="text-[10px] font-bold text-emerald-500 mt-0.5">M-Pesa STK Verified</div>
+                      <div className="text-[10px] font-bold text-success dark:text-emerald-400 mt-0.5">M-Pesa STK Verified</div>
                     </div>
                   </StaggerItem>
                   <StaggerItem index={2} variant="metric-card">
@@ -641,7 +641,7 @@ export default function HomePage() {
                       <div className="text-xl sm:text-2xl font-extrabold text-foreground mt-1">
                         <AnimatedNumber value={14} suffix=" Routers" />
                       </div>
-                      <div className="text-[10px] font-bold text-emerald-500 mt-0.5">● 100% Online</div>
+                      <div className="text-[10px] font-bold text-success dark:text-emerald-400 mt-0.5">● 100% Online</div>
                     </div>
                   </StaggerItem>
                 </div>
@@ -658,11 +658,11 @@ export default function HomePage() {
                         <div className="text-muted-foreground text-[11px]">Account ACC-78912 • M-Pesa KES 2,500</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-emerald-500 font-bold text-xs">
+                    <div className="flex flex-wrap items-center gap-2 text-success dark:text-emerald-400 font-bold text-xs">
                       <span>STK Push Received</span>
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-4 h-4 shrink-0" />
                       <span>FreeRADIUS Updated</span>
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-4 h-4 shrink-0" />
                       <span>Speed Profile 10Mbps Unlocked</span>
                     </div>
                   </div>
@@ -1048,19 +1048,19 @@ export default function HomePage() {
                   Traditional Fragmented Workflow
                 </div>
                 <ul className="space-y-3 text-xs text-muted-foreground font-semibold">
-                  <li className="flex items-center gap-2 text-red-400">
+                  <li className="flex items-center gap-2 text-danger dark:text-red-400">
                     <X className="w-4 h-4 shrink-0" />
                     <span>Manual WinBox static IP &amp; profile assignments</span>
                   </li>
-                  <li className="flex items-center gap-2 text-red-400">
+                  <li className="flex items-center gap-2 text-danger dark:text-red-400">
                     <X className="w-4 h-4 shrink-0" />
                     <span>Checking M-Pesa SMS statements manually on phone</span>
                   </li>
-                  <li className="flex items-center gap-2 text-red-400">
+                  <li className="flex items-center gap-2 text-danger dark:text-red-400">
                     <X className="w-4 h-4 shrink-0" />
                     <span>Excel spreadsheets for customer balance tracking</span>
                   </li>
-                  <li className="flex items-center gap-2 text-red-400">
+                  <li className="flex items-center gap-2 text-danger dark:text-red-400">
                     <X className="w-4 h-4 shrink-0" />
                     <span>Forgotten expirations leading to unpaid internet usage</span>
                   </li>
@@ -1071,24 +1071,24 @@ export default function HomePage() {
             {/* QC NetCore */}
             <StaggerItem index={1} variant="fade-up">
               <div className="h-full p-6 sm:p-8 rounded-3xl bg-surface border border-emerald-500/30 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-4 shadow-xs">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-emerald-500">
+                <div className="text-xs font-extrabold uppercase tracking-wider text-success dark:text-emerald-400">
                   QC NetCore Unified Operating System
                 </div>
                 <ul className="space-y-3 text-xs text-foreground font-semibold">
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <Check className="w-4 h-4 text-success dark:text-emerald-400 shrink-0" />
                     <span>Automated FreeRADIUS &amp; MikroTik provisioning</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <Check className="w-4 h-4 text-success dark:text-emerald-400 shrink-0" />
                     <span>Real-time M-Pesa STK Push &amp; Paybill callbacks</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <Check className="w-4 h-4 text-success dark:text-emerald-400 shrink-0" />
                     <span>Centralized PostgreSQL multi-tenant database</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <Check className="w-4 h-4 text-success dark:text-emerald-400 shrink-0" />
                     <span>Instant automated suspension &amp; service renewal</span>
                   </li>
                 </ul>

@@ -282,7 +282,7 @@ export default function BillingPage() {
               )
             ) : (
               <>
-                <div className="max-h-[calc(100vh-27rem)] min-h-48 overflow-auto">
+                <div className="max-h-[calc(100vh-27rem)] min-h-48 overflow-x-auto overflow-y-auto w-full">
                   <table className="w-full min-w-[46rem] text-left text-sm">
                     <thead className="sticky top-0 z-10 border-b border-border bg-surface-subtle text-xs text-muted-foreground">
                       <tr>
@@ -415,7 +415,7 @@ function StkDialog({
               required
               value={values.accRef}
               onChange={(e) => setters.setAccRef(e.target.value)}
-              placeholder="e.g. GT-8921"
+              placeholder="e.g. QC-8921"
               className={cn(inputClass, "font-mono")}
             />
           </div>

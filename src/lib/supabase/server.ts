@@ -1,14 +1,9 @@
-<<<<<<< HEAD
 // ====================================================================
 // QC NETCORE OPERATING SYSTEM
-=======
-// ============================================================================
-// G-TECH ISP OPERATING SYSTEM
->>>>>>> 0ff4c6be7968271c4202d99ed7dc1bc6924d004e
 // Supabase Server Client
 // Use this ONLY in Server Components, Server Actions, or Route Handlers.
 // Handles cookies for session management and provides fallback values during build time.
-// ============================================================================
+// ====================================================================
 
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'

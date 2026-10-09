@@ -303,7 +303,7 @@ export default function CustomersPage() {
           )
         ) : (
           <>
-            <div className="max-h-[calc(100vh-22rem)] min-h-48 overflow-auto">
+            <div className="max-h-[calc(100vh-22rem)] min-h-48 overflow-x-auto overflow-y-auto w-full">
               <table className="w-full min-w-[52rem] text-left text-sm">
                 <thead className="sticky top-0 z-10 border-b border-border bg-surface-subtle text-xs text-muted-foreground">
                   <tr>

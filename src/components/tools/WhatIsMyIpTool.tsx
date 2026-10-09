@@ -153,7 +153,7 @@ export function WhatIsMyIpTool() {
           <button
             type="button"
             onClick={lookupIp}
-            className="px-3.5 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold text-xs self-start sm:self-auto"
+            className="px-3.5 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-danger dark:text-red-300 font-bold text-xs self-start sm:self-auto"
           >
             Retry Lookup
           </button>

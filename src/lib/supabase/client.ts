@@ -1,15 +1,10 @@
-<<<<<<< HEAD
 // ====================================================================
 // QC NETCORE OPERATING SYSTEM
-=======
-// ============================================================================
-// G-TECH ISP OPERATING SYSTEM
->>>>>>> 0ff4c6be7968271c4202d99ed7dc1bc6924d004e
 // Supabase Browser Client
 // Use this ONLY in Client Components ('use client').
 // Never use this for privileged/server-only operations.
 // Uses the public ANON key - safe to expose to the browser.
-// ============================================================================
+// ====================================================================
 
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/database.types'
