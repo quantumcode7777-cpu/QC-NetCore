@@ -79,11 +79,19 @@ export async function POST(req: NextRequest) {
 
     if (authError || !authData.user) {
       console.error("[Register API] Auth user creation failed:", authError);
-      if (authError?.message?.includes("already") || authError?.code === "email_exists") {
+      const rawMsg = (authError?.message || "").toLowerCase();
+      if (rawMsg.includes("already") || rawMsg.includes("exists") || authError?.code === "email_exists") {
         const msg = "An account with this email address already exists.";
         return NextResponse.json(
           { success: false, code: "EMAIL_EXISTS", message: msg, error: msg },
           { status: 409 }
+        );
+      }
+      if (rawMsg.includes("fetch failed") || rawMsg.includes("econnrefused") || rawMsg.includes("enotfound") || rawMsg.includes("timeout") || rawMsg.includes("network")) {
+        const msg = "Authentication service is temporarily unavailable. Please try again shortly.";
+        return NextResponse.json(
+          { success: false, code: "AUTH_SERVICE_UNAVAILABLE", message: msg, error: msg },
+          { status: 503 }
         );
       }
       const friendly = classifyAuthError(authError, "register");

@@ -36,3 +36,14 @@ test("service-role client is never imported by client code", () => {
     assert.doesNotMatch(read(p), /createSupabaseServiceClient|SERVICE_ROLE/);
   }
 });
+
+test("signup route maps network and service unavailability to 503 instead of misleading 400", () => {
+  assert.match(route, /AUTH_SERVICE_UNAVAILABLE/);
+  assert.match(route, /status:\s*503/);
+});
+
+test("migration 020 ensures customers.balance_due exists with safe numeric precision and default", () => {
+  const m20 = read("supabase/migrations/020_customers_balance_due.sql");
+  assert.match(m20, /ADD COLUMN IF NOT EXISTS balance_due DECIMAL\(12,\s*2\)/i);
+  assert.match(m20, /DEFAULT 0\.00/i);
+});
