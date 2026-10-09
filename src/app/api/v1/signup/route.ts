@@ -153,6 +153,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 4. Update Auth user metadata with organization_id and role so JWT tokens carry them
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        full_name: fullName,
+        organization_name: orgName,
+        organization_id: org.id,
+        role: "isp_owner",
+        phone_number: normalizedPhone,
+        normalized_phone_number: normalizedPhone,
+        country_code: phoneValidation.countryCode,
+      },
+    }).catch((err) => {
+      console.warn("[Register API] Non-fatal user_metadata sync warning:", err);
+    });
+
     return NextResponse.json(
       {
         success: true,
