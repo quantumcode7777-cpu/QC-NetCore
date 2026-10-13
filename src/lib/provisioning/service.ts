@@ -342,8 +342,9 @@ export async function registerRouter(
       return fail(422, "SOURCE_ADDRESS_UNKNOWN", "Could not determine the router's address.");
     }
 
-    // New routers must initially be registered as OFFLINE; real live link/telemetry
-    // determines ONLINE status later.
+    // Registration is proof of life: the router just reached us over the
+    // internet/tunnel, so mark ONLINE. Freshness is derived from
+    // last_seen_at on read (RoutersService), which ages it back out.
     const fields = {
       management_ip: isV7 ? tok.tunnel_ip : (sourceIp as string),
       api_port: 8728,
@@ -359,7 +360,7 @@ export async function registerRouter(
       wireguard_public_key: payload.publicKey ?? null,
       wireguard_tunnel_ip: isV7 ? tok.tunnel_ip : null,
       radius_secret_encrypted: encryptSecret(envResult.config.radiusSecret, encryptionKey),
-      status: "OFFLINE",
+      status: "ONLINE",
       last_seen_at: nowIso,
       updated_at: nowIso,
     };
