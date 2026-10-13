@@ -168,9 +168,11 @@ export class RouterScriptGenerator {
 /ppp aaa set use-radius=yes accounting=yes interim-update=5m
 /ppp profile remove [find name~"gtech-pppoe-profile|qc-pppoe-profile"]
 /ppp profile add name="qc-pppoe-profile" use-ipv6=no use-encryption=yes only-one=yes remote-address=qc-pppoe-pool comment="QC NetCore Standard Profile"
+/interface pppoe-server server remove [find service-name="qc-fiber"]
 /interface pppoe-server server add service-name="qc-fiber" interface=ether1 default-profile=qc-pppoe-profile authentication=pap,chap,mschap2 one-session-per-host=yes disabled=no
 
 # 4. CONFIGURE HOTSPOT ENGINE & WALLED GARDEN FOR M-PESA
+/ip hotspot profile remove [find name="qc-hotspot-profile"]
 /ip hotspot profile add name="qc-hotspot-profile" hotspot-address=10.10.0.1 dns-name=${q(hotspotDns)} login-by=http-chap,cookie,mac-cookie use-radius=yes radius-accounting=yes radius-interim-update=5m radius-default-domain=""
 /ip hotspot walled-garden ip add dst-host="*.safaricom.co.ke" action=accept comment="Allow Safaricom M-Pesa STK push callbacks"
 ${walledGarden}/ip hotspot walled-garden ip add dst-host="*.googleapis.com" action=accept comment="Allow Google Fonts"
@@ -197,6 +199,7 @@ ${registrationBlock(config)}`;
 /ppp aaa set use-radius=yes accounting=yes interim-update=5m
 /ppp profile remove [find name~"gtech-pppoe-profile|qc-pppoe-profile"]
 /ppp profile add name="qc-pppoe-profile" use-ipv6=no use-encryption=yes only-one=yes remote-address=qc-pppoe-pool
+/interface pppoe-server server remove [find service-name="qc-fiber"]
 /interface pppoe-server server add service-name="qc-fiber" interface=ether1 default-profile=qc-pppoe-profile authentication=pap,chap,mschap2 one-session-per-host=yes disabled=no
 
 # 3. WALLED GARDEN FOR M-PESA PAYMENTS
