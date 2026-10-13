@@ -135,9 +135,9 @@ export class RouterScriptGenerator {
     const apiUser = config.apiUser
       ? `
 # API ACCOUNT (least privilege) used by QC NetCore over the management tunnel
+/user remove [find name=${q(config.apiUser.name)}]
 /user group remove [find name=qc-netcore-api]
 /user group add name=qc-netcore-api policy=read,write,api,test,policy comment="QC NetCore API"
-/user remove [find name=${q(config.apiUser.name)}]
 /user add name=${q(config.apiUser.name)} group=qc-netcore-api password=${q(config.apiUser.password)} comment="QC NetCore API"
 `
       : '';
