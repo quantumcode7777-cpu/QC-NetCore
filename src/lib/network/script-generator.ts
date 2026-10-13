@@ -149,9 +149,10 @@ export class RouterScriptGenerator {
     if (isV7) {
       const privateKey = config.routerPrivateKey ? ` private-key=${q(config.routerPrivateKey)}` : '';
       return `${header('V7')}
-# 1. SETUP SECURE WIREGUARD MANAGEMENT TUNNEL
-/interface wireguard remove [find comment~"G-Tech|QC NetCore"]
-/interface wireguard add name=wg-qcnetcore listen-port=13231${privateKey} comment="QC NetCore Management Tunnel"
+# 1. SETUP SECURE WIREGUARD MANAGEMENT TUNNEL (interface keypair is
+# created once and preserved: re-imports must never rotate it, the VPS
+# peer entry pins the router public key)
+:if ([/interface wireguard find name=wg-qcnetcore] = "") do={ /interface wireguard add name=wg-qcnetcore listen-port=13231${privateKey} comment="QC NetCore Management Tunnel" }
 /ip address remove [find comment~"G-Tech WG IP|QC NetCore WG IP"]
 /ip address add address=${config.managementTunnelIp}/16 interface=wg-qcnetcore comment="QC NetCore WG IP"
 /interface wireguard peers remove [find comment~"G-Tech|QC NetCore"]
