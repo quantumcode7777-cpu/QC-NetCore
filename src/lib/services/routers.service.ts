@@ -151,12 +151,18 @@ export class RoutersService {
 
 function mapRouterRow(row: Record<string, unknown>): Router {
   // Freshness-derived presence: a router seen in the last 10 minutes reads
-  // ONLINE even if its stored flag is stale (nothing polls it back). A router
-  // silent longer than that falls back to its stored status.
+  // ONLINE. Older than that it reads OFFLINE no matter what the stored flag
+  // says (nothing polls it back, so a stale ONLINE would stick forever).
+  // A live poller/heartbeat can later set DEGRADED/UNREACHABLE explicitly.
   const stored = row.status as Router["status"];
   const lastSeen = Date.parse(String(row.last_seen_at ?? ""));
   const fresh =
     Number.isFinite(lastSeen) && Date.now() - lastSeen < 10 * 60 * 1000;
+  const status: Router["status"] = fresh
+    ? "ONLINE"
+    : stored === "ONLINE"
+      ? "OFFLINE"
+      : stored;
   return {
     id: row.id as string,
     organizationId: row.organization_id as string,
@@ -174,7 +180,7 @@ function mapRouterRow(row: Record<string, unknown>): Router {
     connectionType: row.connection_type as Router["connectionType"],
     wireguardPublicKey: row.wireguard_public_key as string | undefined,
     wireguardTunnelIp: row.wireguard_tunnel_ip as string | undefined,
-    status: fresh ? "ONLINE" : stored,
+    status,
     lastSeenAt: row.last_seen_at as string,
     createdAt: row.created_at as string,
   };
