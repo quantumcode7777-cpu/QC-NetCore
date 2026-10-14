@@ -170,9 +170,10 @@ no tunnel/poller needed):
   radcheck+radreply in lockstep; `source` scoping (PPPOE/VOUCHER/MANUAL);
   `expires_at` wall-clock; RLS locked to `service_role`; idempotent backfill
   preserving MANUAL rows.
-- Local Docker Desktop WSL backend is dead → verifying on a VPS scratch PG
-  instead: `tests/radius-sync.test.mjs` (node, skips without docker) +
-  `tests/radius-sync-verify.sql` (self-asserting psql script). Run the scratch
-  test first, then apply 022 in the Supabase SQL editor.
+- Local Docker Desktop WSL backend is dead → verified on a VPS scratch PG
+  instead (`ALL RADIUS SYNC CHECKS PASSED`, Oct 14). The scratch run caught a
+  real bug first (`record` loop vars can't cast to rowtype — fixed in `9e0c92d`).
+- Apply 022 in the Supabase SQL editor (paste the file from GitHub raw), then do
+  the Phase 2 VPS config below.
 - Phase 2 config still to do on VPS after 022 is applied: `authorize_check_query`
   `AND (expires_at IS NULL OR expires_at > now())` — see `docs/FREERADIUS_RLM_SQL.md`.
