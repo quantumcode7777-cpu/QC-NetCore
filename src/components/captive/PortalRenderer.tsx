@@ -57,6 +57,14 @@ interface PortalRendererProps {
   /** Optional demo portal settings when running in Demo Mode or Customizer Preview. */
   demoSettings?: DemoPortalSettings;
   isDemo?: boolean;
+  /** Live-mode only: org slug for voucher redemption (omitted in demo/preview). */
+  orgSlug?: string;
+  /** Live-mode only: hotspot login URL to bounce back to after activation. */
+  linkLoginUrl?: string | null;
+  /** Live-mode only: guest MAC forwarded for voucher attribution. */
+  clientMac?: string | null;
+  /** Draft preview must never touch live vouchers. */
+  isDraftPreview?: boolean;
   className?: string;
 }
 
@@ -149,6 +157,10 @@ export function PortalRenderer({
   supportedMethods,
   demoSettings,
   isDemo = false,
+  orgSlug,
+  linkLoginUrl,
+  clientMac,
+  isDraftPreview = false,
   className,
 }: PortalRendererProps) {
   const { ref, width } = useElementWidth<HTMLDivElement>();
@@ -280,21 +292,66 @@ export function PortalRenderer({
     }
   };
 
-  const handleVoucher = (e: React.FormEvent) => {
+  const handleVoucher = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = voucher.trim().toUpperCase();
     if (!/^[A-Z0-9-]{6,24}$/.test(code)) {
       setStatus({ kind: "error", text: msgs.voucherInvalid });
       return;
     }
+    const live = mode === "live" && !isDemo && !isDraftPreview && Boolean(orgSlug);
+    if (!live) {
+      if (mode === "live" && !isDemo) {
+        setStatus({
+          kind: "error",
+          text: "Voucher redemption is not configured for this preview.",
+        });
+        return;
+      }
+      setBusy(true);
+      setStatus({ kind: "info", text: "Validating voucher code with RADIUS server…" });
+      setTimeout(() => {
+        const successText = demoSettings?.voucherActivationMessage || msgs.loginSuccess;
+        setStatus({ kind: "success", text: successText });
+        setActiveSession({
+          method: "VOUCHER",
+          packageName: selected?.name || "Hotspot Voucher Pass",
+          speedLabel: selected?.speedLabel || "10 Mbps",
+          durationLabel: selected?.durationLabel || "24 Hours",
+          dataLabel: "Unlimited",
+          reference: code,
+          phoneOrUser: code,
+        });
+        setBusy(false);
+      }, 900);
+      return;
+    }
     setBusy(true);
     setStatus({ kind: "info", text: "Validating voucher code with RADIUS server…" });
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/v1/captive/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ org: orgSlug, code, mac: clientMac ?? undefined }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        success?: boolean;
+        message?: string;
+        data?: { username: string; password: string; planName?: string | null };
+      } | null;
+      if (!json?.success || !json.data) {
+        setStatus({
+          kind: "error",
+          text: json?.message || msgs.voucherInvalid,
+        });
+        setBusy(false);
+        return;
+      }
       const successText = demoSettings?.voucherActivationMessage || msgs.loginSuccess;
       setStatus({ kind: "success", text: successText });
       setActiveSession({
         method: "VOUCHER",
-        packageName: selected?.name || "Hotspot Voucher Pass",
+        packageName: json.data.planName || selected?.name || "Hotspot Voucher Pass",
         speedLabel: selected?.speedLabel || "10 Mbps",
         durationLabel: selected?.durationLabel || "24 Hours",
         dataLabel: "Unlimited",
@@ -302,7 +359,19 @@ export function PortalRenderer({
         phoneOrUser: code,
       });
       setBusy(false);
-    }, 900);
+      if (linkLoginUrl) {
+        const sep = linkLoginUrl.includes("?") ? "&" : "?";
+        const target =
+          `${linkLoginUrl}${sep}username=${encodeURIComponent(json.data.username)}` +
+          `&password=${encodeURIComponent(json.data.password)}`;
+        window.setTimeout(() => {
+          window.location.href = target;
+        }, 900);
+      }
+    } catch {
+      setStatus({ kind: "error", text: msgs.voucherInvalid });
+      setBusy(false);
+    }
   };
 
   const handleAccountLogin = (e: React.FormEvent) => {

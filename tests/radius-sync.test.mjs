@@ -28,8 +28,18 @@ const MIGRATIONS = [
   "022_radius_sync.sql",
 ];
 
-const dockerOk =
-  spawnSync("docker", ["--version"], { encoding: "utf8" }).status === 0;
+const dockerOk = (() => {
+  try {
+    // Probe the daemon (not just the CLI) so the test skips cleanly
+    // on machines where Docker Desktop isn't running.
+    return (
+      spawnSync("docker", ["info"], { encoding: "utf8", timeout: 30000 }).status ===
+      0
+    );
+  } catch {
+    return false;
+  }
+})();
 
 function docker(args, input) {
   const r = spawnSync("docker", args, {

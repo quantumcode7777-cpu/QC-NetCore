@@ -173,13 +173,59 @@ function doVoucher() {
   return true;
 }
 $(endif)
+/* Set this to your organization slug (Supabase: SELECT slug FROM organizations). */
+var PORTAL_ORG = "";
 function buy(plan) {
   var phone = document.getElementById('phone').value.replace(/[^0-9]/g, '');
   var url = 'https://billing.quantumcode.co.ke/captive?mac=$(mac)&ip=$(ip)' +
+    (PORTAL_ORG ? '&org=' + encodeURIComponent(PORTAL_ORG) : '') +
+    '&linklogin=' + encodeURIComponent('$(link-login-only)') +
     (plan ? '&plan=' + encodeURIComponent(plan) : '') +
     (phone ? '&phone=' + encodeURIComponent(phone) : '');
   window.location.href = url;
 }
+$(if chap-id)
+function autoSubmitAccount() { doLogin(); }
+function autoSubmitVoucher() { doVoucher(); }
+$(else)
+function autoSubmitAccount() { document.forms.login.submit(); }
+function autoSubmitVoucher() {
+  var code = document.getElementById('vcode').value;
+  var f = document.forms.vlogin;
+  var u = document.createElement('input');
+  u.type = 'hidden'; u.name = 'username'; u.value = code; f.appendChild(u);
+  var p = document.createElement('input');
+  p.type = 'hidden'; p.name = 'password'; p.value = code; f.appendChild(p);
+  f.submit();
+}
+$(endif)
+/* Auto-login bounce-back from the portal (?username=..&password=..). */
+(function autoLogin() {
+  try {
+    if (document.querySelector('.error')) return; // last attempt failed: let the user correct it
+    var q = location.search || '';
+    var mu = /[?&]username=([^&]*)/.exec(q);
+    if (!mu) return;
+    var u = decodeURIComponent(mu[1].replace(/\+/g, ' '));
+    if (!u) return;
+    var mp = /[?&]password=([^&]*)/.exec(q);
+    var pw = mp ? decodeURIComponent(mp[1].replace(/\+/g, ' ')) : u;
+    var overlay = document.createElement('div');
+    overlay.setAttribute('style', 'position:fixed;inset:0;background:rgba(6,10,24,.94);color:#e8eefc;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;z-index:9999;');
+    overlay.textContent = 'Connecting…';
+    document.body.appendChild(overlay);
+    if (u === pw) {
+      showPane('voucher');
+      document.getElementById('vcode').value = u;
+      autoSubmitVoucher();
+    } else {
+      showPane('account');
+      document.forms.login.username.value = u;
+      if (document.forms.login.password) document.forms.login.password.value = pw;
+      autoSubmitAccount();
+    }
+  } catch (e) { /* fall through to the manual form */ }
+})();
 </script>
 </body>
 </html>

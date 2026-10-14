@@ -9,6 +9,7 @@ import {
   type PlanLike,
   type PortalConfig,
 } from "@/lib/captive/config";
+import { isSafeLinkLoginUrl } from "@/lib/captive/redeem";
 import {
   DEMO_CAPTIVE_EVENT,
   loadDemoCaptiveState,
@@ -21,6 +22,7 @@ interface PortalPayload {
   plans: PlanLike[];
   methods: string[];
   organizationName: string;
+  organizationSlug: string;
   isDraftPreview: boolean;
   isDemo: boolean;
   demoSettings?: DemoPortalSettings;
@@ -36,6 +38,10 @@ export default function CaptivePortalPage() {
   const [data, setData] = useState<PortalPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resetNotice, setResetNotice] = useState(false);
+  const [hotspot, setHotspot] = useState<{ linkLogin: string | null; mac: string | null }>({
+    linkLogin: null,
+    mac: null,
+  });
 
   const applyLocalDemoState = useCallback((wantsDraft: boolean, orgNameFallback = "QC NetCore") => {
     const demoState = loadDemoCaptiveState(orgNameFallback);
@@ -44,6 +50,7 @@ export default function CaptivePortalPage() {
       plans: demoState.plans.length > 0 ? demoState.plans : DEFAULT_DEMO_HOTSPOT_PLANS,
       methods: ["voucher", "mpesa"],
       organizationName: (wantsDraft ? demoState.draft : demoState.published).branding.businessName || orgNameFallback,
+      organizationSlug: "",
       isDraftPreview: wantsDraft,
       isDemo: true,
       demoSettings: demoState.settings,
@@ -54,6 +61,14 @@ export default function CaptivePortalPage() {
     const ctrl = new AbortController();
     const params = new URLSearchParams(window.location.search);
     const org = params.get("org");
+    const rawLinkLogin = params.get("linklogin");
+    setHotspot({
+      linkLogin:
+        typeof rawLinkLogin === "string" && isSafeLinkLoginUrl(rawLinkLogin)
+          ? rawLinkLogin.trim()
+          : null,
+      mac: (params.get("mac") ?? "").trim().slice(0, 20) || null,
+    });
     const wantsDraft = params.get("preview") === "draft";
     const explicitDemo = params.get("demo") === "true" || !org || org === "nexanet-technologies";
 
@@ -72,6 +87,7 @@ export default function CaptivePortalPage() {
               plans: json.data.plans?.length ? json.data.plans : DEFAULT_DEMO_HOTSPOT_PLANS,
               methods: ["voucher", "mpesa"],
               organizationName: json.data.organization?.name ?? "",
+              organizationSlug: json.data.organization?.slug ?? "",
               isDraftPreview: true,
               isDemo: Boolean(json.data.isDemo),
             });
@@ -102,6 +118,7 @@ export default function CaptivePortalPage() {
           plans: json.data.plans,
           methods: json.data.methods,
           organizationName: json.data.organization?.name ?? "",
+          organizationSlug: json.data.organization?.slug ?? "",
           isDraftPreview: false,
           isDemo: false,
         });
@@ -236,6 +253,12 @@ export default function CaptivePortalPage() {
         isDemo={data.isDemo}
         mode="live"
         className="flex-1"
+        orgSlug={
+          !data.isDemo && !data.isDraftPreview ? data.organizationSlug || undefined : undefined
+        }
+        linkLoginUrl={hotspot.linkLogin}
+        clientMac={hotspot.mac}
+        isDraftPreview={data.isDraftPreview}
       />
     </div>
   );

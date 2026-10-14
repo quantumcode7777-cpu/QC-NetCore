@@ -179,5 +179,24 @@ no tunnel/poller needed):
   Gotcha: invisible trailing space after a continuation `\` = `Unterminated
   string` at parse; rewrite such lines with sed and verify with `cat -A`.
   `radtest testuser` still Accepts with the filter live → Phase 2 COMPLETE.
+
+## 13. Phase 3 slice 1 — voucher redeem + auto-login (built, uncommitted, Oct 14)
+
+- `POST /api/v1/captive/redeem` (public, anon): `{ org, code, mac?, phone? }`
+  → org by slug, org-scoped voucher lookup, first activation stamps USED +
+  paid window (022 triggers write rad rows), re-redeem inside window re-issues
+  same credentials, lapsed USED flips to EXPIRED (purges rad rows).
+- Pure logic `src/lib/captive/redeem.ts` — `tests/captive-redeem.test.mjs` 6/6;
+  full suite 84 pass + 1 skip (radius-sync skips via `docker info` gate now).
+- Portal UI: `PortalRenderer` voucher tab calls redeem when live (real org, not
+  draft) then bounces to `linklogin?username=&password=`; demo/preview/draft
+  paths untouched — draft preview can never burn real vouchers.
+- `hotspot/login.html`: `PORTAL_ORG` const (SET per site) + `buy()` passes
+  `org` + `linklogin=$(link-login-only)`; auto-login snippet reads the query
+  params, skips when an error box shows, CHAP/PAP variants, overlay.
+- Live proof needs: org slug, one AVAILABLE voucher on a HOTSPOT plan,
+  `PORTAL_ORG` set + login.html re-uploaded, billing rebuilt in Coolify.
+- Open: redeem brute-force rate-limit (TODO); M-Pesa STK slice needs live
+  Daraja keys (still placeholders in billing env).
 - Phase 2 config still to do on VPS after 022 is applied: `authorize_check_query`
   `AND (expires_at IS NULL OR expires_at > now())` — see `docs/FREERADIUS_RLM_SQL.md`.
