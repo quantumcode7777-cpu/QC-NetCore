@@ -17,11 +17,13 @@ import {
   decryptSecret,
   encryptSecret,
   generateApiPassword,
+  generateHeartbeatToken,
   generateProvisioningToken,
   hashToken,
   loadProvisioningEnv,
   routerOsMajor,
   type BootstrapRequest,
+  type HeartbeatPayload,
   type ProvisioningEnv,
   type RegistrationPayload,
 } from "./core";
@@ -219,6 +221,7 @@ export async function issueBootstrap(actor: Actor, req: BootstrapRequest): Promi
     }
 
     const { token, tokenHash } = generateProvisioningToken();
+    const { token: heartbeatToken, tokenHash: heartbeatTokenHash } = generateHeartbeatToken();
     const apiPassword = generateApiPassword();
     const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
 
@@ -243,6 +246,7 @@ export async function issueBootstrap(actor: Actor, req: BootstrapRequest): Promi
           routeros_version: version,
           tunnel_ip: tunnelIp,
           token_hash: tokenHash,
+          heartbeat_token_hash: heartbeatTokenHash,
           api_password_encrypted: encryptSecret(apiPassword, env.encryptionKey),
           status: "PROVISIONING",
           expires_at: expiresAt,
@@ -279,6 +283,7 @@ export async function issueBootstrap(actor: Actor, req: BootstrapRequest): Promi
         hotspotDnsName: env.hotspotDnsName,
         portalDomain: env.portalDomain,
         registration: { url: `${env.baseUrl}/api/v1/mikrotik-provisioning/register`, token },
+        heartbeat: { url: `${env.baseUrl}/api/v1/mikrotik-fleet/heartbeat`, token: heartbeatToken },
         apiUser: { name: ROUTER_API_USER, password: apiPassword },
       });
     } catch (err) {
@@ -360,6 +365,7 @@ export async function registerRouter(
       wireguard_public_key: payload.publicKey ?? null,
       wireguard_tunnel_ip: isV7 ? tok.tunnel_ip : null,
       radius_secret_encrypted: encryptSecret(envResult.config.radiusSecret, encryptionKey),
+      heartbeat_token_hash: (tok as Record<string, unknown>).heartbeat_token_hash as string | null ?? null,
       status: "ONLINE",
       last_seen_at: nowIso,
       updated_at: nowIso,
@@ -399,6 +405,41 @@ export async function registerRouter(
     return { ok: true, routerId: routerId as string };
   } catch (err) {
     console.error("[provisioning] registerRouter failed:", (err as Error)?.message);
+    return fail(503, "SERVICE_UNAVAILABLE", "The service is temporarily unavailable.");
+  }
+}
+
+/** Called by the router scheduler every 2 minutes (token-authenticated, no session). */
+export async function recordHeartbeat(
+  payload: HeartbeatPayload
+): Promise<{ ok: true; routerId: string } | ProvisioningError> {
+  const db = serviceClient();
+  if (!db) return fail(503, "SERVICE_UNAVAILABLE", "The service is temporarily unavailable.");
+  try {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await db
+      .from("routers")
+      .update({
+        routeros_version: payload.routerosVersion,
+        board_model: payload.boardModel,
+        cpu_load: payload.cpuLoad,
+        free_memory_mb: payload.freeMemoryMb,
+        uptime: payload.uptime,
+        status: "ONLINE",
+        last_seen_at: nowIso,
+        updated_at: nowIso,
+      })
+      .eq("heartbeat_token_hash", hashToken(payload.token))
+      .select("id")
+      .maybeSingle();
+    if (error) {
+      console.error("[heartbeat] update failed:", error.code || error.message);
+      return fail(503, "SERVICE_UNAVAILABLE", "The service is temporarily unavailable.");
+    }
+    if (!data) return fail(401, "TOKEN_INVALID", "Heartbeat token is invalid. Generate a new provisioning script.");
+    return { ok: true, routerId: data.id };
+  } catch (err) {
+    console.error("[heartbeat] unexpected failure:", (err as Error)?.message);
     return fail(503, "SERVICE_UNAVAILABLE", "The service is temporarily unavailable.");
   }
 }

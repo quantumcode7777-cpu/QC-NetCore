@@ -150,14 +150,15 @@ export class RoutersService {
 }
 
 function mapRouterRow(row: Record<string, unknown>): Router {
-  // Freshness-derived presence: a router seen in the last 10 minutes reads
-  // ONLINE. Older than that it reads OFFLINE no matter what the stored flag
-  // says (nothing polls it back, so a stale ONLINE would stick forever).
+  // Freshness-derived presence: beats arrive every 2 minutes, so a router
+  // seen in the last 5 minutes reads ONLINE. Older than that it reads
+  // OFFLINE no matter what the stored flag says (nothing polls it back,
+  // so a stale ONLINE would stick forever).
   // A live poller/heartbeat can later set DEGRADED/UNREACHABLE explicitly.
   const stored = row.status as Router["status"];
   const lastSeen = Date.parse(String(row.last_seen_at ?? ""));
   const fresh =
-    Number.isFinite(lastSeen) && Date.now() - lastSeen < 10 * 60 * 1000;
+    Number.isFinite(lastSeen) && Date.now() - lastSeen < 5 * 60 * 1000;
   const status: Router["status"] = fresh
     ? "ONLINE"
     : stored === "ONLINE"

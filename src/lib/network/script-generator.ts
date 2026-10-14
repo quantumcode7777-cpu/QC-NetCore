@@ -33,6 +33,11 @@ export interface ProvisioningConfig {
   portalDomain?: string;
   /** When present, the script reports back to the platform to register the router. */
   registration?: { url: string; token: string };
+  /**
+   * When present, the router reports telemetry every 2 minutes via a
+   * scheduler-driven script. Long-lived token, embedded once at bootstrap.
+   */
+  heartbeat?: { url: string; token: string };
   /** Dedicated least-privilege API account created on the router. */
   apiUser?: { name: string; password: string };
 }
@@ -92,6 +97,10 @@ function assertConfig(config: ProvisioningConfig): void {
     if (!/^https?:\/\/[^\s"\\$?[\]]+$/.test(config.registration.url)) fail('registration.url');
     if (!/^[A-Za-z0-9_-]{16,128}$/.test(config.registration.token)) fail('registration.token');
   }
+  if (config.heartbeat) {
+    if (!/^https?:\/\/[^\s"\\$?[\]]+$/.test(config.heartbeat.url)) fail('heartbeat.url');
+    if (!/^[A-Za-z0-9_-]{16,128}$/.test(config.heartbeat.token)) fail('heartbeat.token');
+  }
   if (config.apiUser) {
     if (!/^[A-Za-z0-9._-]{1,32}$/.test(config.apiUser.name)) fail('apiUser.name');
     if (!config.apiUser.password) fail('apiUser.password');
@@ -111,6 +120,26 @@ function registrationBlock(config: ProvisioningConfig): string {
 :delay 10s
 ${keyPart}:local payload ("{\\"token\\":\\"${token}\\",${keyJson}\\"routerosVersion\\":\\"" . [/system resource get version] . "\\",\\"boardModel\\":\\"" . [/system resource get board-name] . "\\",\\"cpuLoad\\":" . [/system resource get cpu-load] . ",\\"freeMemoryMb\\":" . ([/system resource get free-memory] / 1048576) . ",\\"uptime\\":\\"" . [/system resource get uptime] . "\\"}")
 /tool fetch url=${q(url)} http-method=post http-header-field="Content-Type: application/json" http-data=$payload check-certificate=yes output=none
+`;
+}
+
+/**
+ * Presence heartbeat: a scheduler runs a stored script every 2 minutes that
+ * POSTs telemetry. The stored script is embedded inside source="...", so the
+ * plain script is escaped (" -> \" and $ -> \$) for that outer layer.
+ * Idempotent: re-imports replace the script and scheduler in place.
+ */
+function heartbeatBlock(config: ProvisioningConfig): string {
+  if (!config.heartbeat) return '';
+  const { url, token } = config.heartbeat;
+  const inner = `:local tok "${token}"; :local payload ("{\\"token\\":\\"" . $tok . "\\",\\"routerosVersion\\":\\"" . [/system resource get version] . "\\",\\"boardModel\\":\\"" . [/system resource get board-name] . "\\",\\"cpuLoad\\":" . [/system resource get cpu-load] . ",\\"freeMemoryMb\\":" . ([/system resource get free-memory] / 1048576) . ",\\"uptime\\":\\"" . [/system resource get uptime] . "\\"}"); /tool fetch url="${url}" http-method=post http-header-field="Content-Type: application/json" http-data=$payload check-certificate=yes output=none`;
+  const escaped = inner.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$");
+  return `
+# 7. PRESENCE HEARTBEAT (telemetry every 2 minutes over HTTPS, no tunnel needed)
+/system script remove [find name="qc-heartbeat"]
+/system script add name=qc-heartbeat source="${escaped}"
+/system scheduler remove [find name="qc-heartbeat"]
+/system scheduler add name=qc-heartbeat interval=2m start-time=startup on-event="/system script run qc-heartbeat"
 `;
 }
 
@@ -184,7 +213,7 @@ ${apiUser}
 /ip service set winbox address=10.200.0.0/16,192.168.88.0/24 disabled=no
 
 /log info "QC NetCore Provisioning Completed Successfully"
-${registrationBlock(config)}`;
+${registrationBlock(config)}${heartbeatBlock(config)}`;
     }
 
     // RouterOS v6 fallback script (no native WireGuard)
@@ -205,6 +234,6 @@ ${registrationBlock(config)}`;
 
 # 3. WALLED GARDEN FOR M-PESA PAYMENTS
 /ip hotspot walled-garden ip add dst-host="*.safaricom.co.ke" action=accept
-${walledGarden}${apiUser}${registrationBlock(config)}`;
+${walledGarden}${apiUser}${registrationBlock(config)}${heartbeatBlock(config)}`;
   }
 }

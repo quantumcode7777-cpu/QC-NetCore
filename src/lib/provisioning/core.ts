@@ -129,11 +129,63 @@ export function routerOsMajor(version: string | null | undefined): "v6" | "v7" {
   return /^v?6/.test(String(version ?? "").trim()) ? "v6" : "v7";
 }
 
+export interface HeartbeatPayload {
+  token: string;
+  routerosVersion: string;
+  boardModel: string;
+  cpuLoad: number;
+  freeMemoryMb: number;
+  uptime: string;
+}
+
+/**
+ * Validates a router heartbeat body. The router is identified by its
+ * long-lived heartbeat token only (looked up by hash server-side).
+ */
+export function validateHeartbeatPayload(body: unknown): Validated<HeartbeatPayload> {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { ok: false, field: "body", message: "Request body must be a JSON object." };
+  }
+  const b = body as Record<string, unknown>;
+  if (typeof b.token !== "string" || !TOKEN_FORMAT.test(b.token)) {
+    return { ok: false, field: "token", message: "Heartbeat token is invalid." };
+  }
+  const text = (key: string): string | null =>
+    typeof b[key] === "string" && SAFE_TEXT.test(b[key] as string) ? (b[key] as string) : null;
+  const version = text("routerosVersion");
+  const board = text("boardModel");
+  const uptime = text("uptime");
+  if (version === null || board === null || uptime === null) {
+    return { ok: false, field: "telemetry", message: "Heartbeat contains invalid values." };
+  }
+  const cpu = Number(b.cpuLoad);
+  const mem = Number(b.freeMemoryMb);
+  if (!Number.isFinite(cpu) || cpu < 0 || cpu > 100 || !Number.isFinite(mem) || mem < 0) {
+    return { ok: false, field: "telemetry", message: "Heartbeat contains invalid values." };
+  }
+  return {
+    ok: true,
+    value: {
+      token: b.token,
+      routerosVersion: version,
+      boardModel: board,
+      cpuLoad: Math.round(cpu),
+      freeMemoryMb: Math.round(mem),
+      uptime,
+    },
+  };
+}
+
 // ---------- Tokens ----------
 
 export function generateProvisioningToken(): { token: string; tokenHash: string } {
   const token = randomBytes(32).toString("base64url");
   return { token, tokenHash: hashToken(token) };
+}
+
+/** Long-lived per-router heartbeat token. Same format, independent value. */
+export function generateHeartbeatToken(): { token: string; tokenHash: string } {
+  return generateProvisioningToken();
 }
 
 export function hashToken(token: string): string {

@@ -9,7 +9,9 @@ import {
 import {
   validateBootstrapRequest,
   validateRegistrationPayload,
+  validateHeartbeatPayload,
   generateProvisioningToken,
+  generateHeartbeatToken,
   hashToken,
   allocateTunnelIp,
   encryptSecret,
@@ -133,8 +135,7 @@ test("validateRegistrationPayload validates router callback reports", () => {
   assert.strictEqual(badCpu.ok, false);
 });
 
-test("Token hashing and tunnel IP allocation logic", () => {
-  const { token, tokenHash } = generateProvisioningToken();
+test("Token hashing and tunnel IP allocation logic", () => {  const { token, tokenHash } = generateProvisioningToken();
   assert.ok(token.length >= 32);
   assert.strictEqual(hashToken(token), tokenHash);
 
@@ -205,6 +206,86 @@ test("loadProvisioningEnv validates required server secrets safely", () => {
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key-test",
   });
   assert.strictEqual(validResult.ok, true);
+});
+
+test("validateHeartbeatPayload validates router presence beats", () => {
+  const valid = validateHeartbeatPayload({
+    token: "heartbeat-token-with-sufficient-length-123456789",
+    routerosVersion: "7.23.6",
+    boardModel: "RB951Ui-2HnD",
+    cpuLoad: 14,
+    freeMemoryMb: 75,
+    uptime: "47m",
+  });
+  assert.strictEqual(valid.ok, true);
+
+  const badToken = validateHeartbeatPayload({
+    token: "short",
+    routerosVersion: "7.23.6",
+    boardModel: "RB951Ui-2HnD",
+    cpuLoad: 14,
+    freeMemoryMb: 75,
+    uptime: "47m",
+  });
+  assert.strictEqual(badToken.ok, false);
+
+  const badCpu = validateHeartbeatPayload({
+    token: "heartbeat-token-with-sufficient-length-123456789",
+    routerosVersion: "7.23.6",
+    boardModel: "RB951Ui-2HnD",
+    cpuLoad: 101,
+    freeMemoryMb: 75,
+    uptime: "47m",
+  });
+  assert.strictEqual(badCpu.ok, false);
+});
+
+test("generateHeartbeatToken produces independent hash-roundtripping tokens", () => {
+  const { token, tokenHash } = generateHeartbeatToken();
+  assert.ok(token.length >= 32);
+  assert.strictEqual(hashToken(token), tokenHash);
+});
+
+test("RouterScriptGenerator embeds idempotent 2-minute heartbeat scheduler", () => {
+  const validKey = "soi2weumuf2A9tx20aJYYORBr4M6dLPFVEkdK07DJiw=";
+  const base = {
+    routerName: "Core-BNG-01",
+    orgName: "Acme Networks",
+    orgSlug: "acme-net",
+    orgId: "org-123",
+    managementTunnelIp: "10.200.1.25",
+    saasGatewayHost: "vpn.example.com",
+    saasGatewayPort: 51820,
+    saasPublicKey: validKey,
+    radiusSecret: "super-secret-radius-key",
+    radiusAuthPort: 1812,
+    radiusAcctPort: 1813,
+  };
+  for (const routerOsVersion of ["v6", "v7"]) {
+    const script = RouterScriptGenerator.generateScript({
+      ...base,
+      routerOsVersion,
+      heartbeat: {
+        url: "https://billing.example.com/api/v1/mikrotik-fleet/heartbeat",
+        token: "heartbeat-token-with-sufficient-length-123456789",
+      },
+    });
+    assert.match(script, /\/system script add name=qc-heartbeat source="/);
+    assert.match(
+      script,
+      /\/system scheduler add name=qc-heartbeat interval=2m start-time=startup/
+    );
+    assert.match(script, /mikrotik-fleet\/heartbeat/);
+    // Runtime $ references must be escaped for the outer source="..." layer
+    assert.match(script, /\\\$(rid|tok|payload)/);
+  }
+
+  // No heartbeat configured: no scheduler emitted
+  const plain = RouterScriptGenerator.generateScript({
+    ...base,
+    routerOsVersion: "v7",
+  });
+  assert.doesNotMatch(plain, /qc-heartbeat/);
 });
 
 test("getProvisioningConfigDiagnostics safely reports status without exposing secret values", async () => {
