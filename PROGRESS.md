@@ -138,3 +138,41 @@ no tunnel/poller needed):
 3. Router: `/system scheduler print` (qc-heartbeat), `/interface wireguard peers print detail`
    (`last-handshake` recent), `/ping 10.200.1.1`.
 4. VPS: `sudo wg show` (endpoint + handshake + transfer).
+
+## 11. FreeRADIUS bring-up (Phase 1 COMPLETE incl. router proof, Oct 14)
+
+- `sql` module: `driver=rlm_sql_${dialect}`, `dialect=postgresql`
+  (package `freeradius-postgresql` 3.2.5 present), `port=5432`, `login=postgres`,
+  `password=<SERVICE_PASSWORD_POSTGRES>`, `radius_db=postgres`.
+- `server` = Supabase **DB container internal IP**, NOT localhost: the DB port is
+  Docker-internal only (`ss` shows nothing on host 5432; localhost and the VPS
+  public IP both refused). Resolve via
+  `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <db-container>`.
+  NOTE: changes on container recreate — durable fix = publish 5432 in Coolify.
+- Gotchas: file lines are indented (`sed 's/^server = …/'` matched nothing —
+  anchor `[[:space:]]*` and confirm grep prints the lines); `freeradius -Q` is
+  invalid → check is `freeradius -C`; `clients.conf`/`sql` need sudo to read.
+- `client kutus { 0.0.0.0/0, secret=<RADIUS_SECRET>, require_message_authenticator=no }`;
+  ufw `1812/1813/3799-udp` (+ Hetzner Cloud firewall may need the same).
+- Breakthrough bug: `radpostauth` table missing → post-auth audit INSERT failed →
+  Accepts flipped to Rejects (`relation "radpostauth" does not exist`). Table
+  created (also folded into 022).
+- Proof: `radtest testuser → Access-Accept`; service enabled; KUTUS `/radius`
+  (ppp,hotspot @ VPS public IP) + hotspot profile `use-radius=yes` verified;
+  ping 0% loss (~218ms); **live phone login with `testuser` works end-to-end**.
+- Open: confirm billing login healthy — its `DATABASE_URL` uses the VPS public IP,
+  which refused 5432 from host (may share the unpublished-port root cause).
+
+## 12. Phase 2 — rad sync writers (022, written, NOT yet verified/applied)
+
+- `supabase/migrations/022_radius_sync.sql`: triggers on `hotspot_vouchers` /
+  `pppoe_accounts` / `customers` / `subscriptions` / `plans` keep
+  radcheck+radreply in lockstep; `source` scoping (PPPOE/VOUCHER/MANUAL);
+  `expires_at` wall-clock; RLS locked to `service_role`; idempotent backfill
+  preserving MANUAL rows.
+- Local Docker Desktop WSL backend is dead → verifying on a VPS scratch PG
+  instead: `tests/radius-sync.test.mjs` (node, skips without docker) +
+  `tests/radius-sync-verify.sql` (self-asserting psql script). Run the scratch
+  test first, then apply 022 in the Supabase SQL editor.
+- Phase 2 config still to do on VPS after 022 is applied: `authorize_check_query`
+  `AND (expires_at IS NULL OR expires_at > now())` — see `docs/FREERADIUS_RLM_SQL.md`.
