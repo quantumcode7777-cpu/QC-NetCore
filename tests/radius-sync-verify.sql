@@ -100,15 +100,16 @@ SELECT pg_temp.qassert(
 -- ---- 2) backfill is idempotent, MANUAL rows preserved ----------------
 DO $$
 DECLARE
-    r RECORD;
+    rp pppoe_accounts%ROWTYPE;
+    rv hotspot_vouchers%ROWTYPE;
 BEGIN
     DELETE FROM radcheck WHERE source IN ('PPPOE', 'VOUCHER');
     DELETE FROM radreply  WHERE source IN ('PPPOE', 'VOUCHER');
-    FOR r IN SELECT * FROM pppoe_accounts LOOP
-        PERFORM radius_reconcile_pppoe(r);
+    FOR rp IN SELECT * FROM pppoe_accounts LOOP
+        PERFORM radius_reconcile_pppoe(rp);
     END LOOP;
-    FOR r IN SELECT * FROM hotspot_vouchers LOOP
-        PERFORM radius_reconcile_voucher(r);
+    FOR rv IN SELECT * FROM hotspot_vouchers LOOP
+        PERFORM radius_reconcile_voucher(rv);
     END LOOP;
 END $$;
 

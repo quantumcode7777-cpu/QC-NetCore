@@ -275,7 +275,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-    r RECORD;
+    r pppoe_accounts%ROWTYPE;
 BEGIN
     FOR r IN SELECT * FROM pppoe_accounts WHERE customer_id = NEW.id LOOP
         PERFORM radius_reconcile_pppoe(r);
@@ -296,7 +296,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-    r     RECORD;
+    r     pppoe_accounts%ROWTYPE;
     v_old UUID;
 BEGIN
     IF TG_OP = 'UPDATE' AND OLD.customer_id IS DISTINCT FROM NEW.customer_id THEN
@@ -334,13 +334,14 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-    r RECORD;
+    rp pppoe_accounts%ROWTYPE;
+    rv hotspot_vouchers%ROWTYPE;
 BEGIN
-    FOR r IN SELECT * FROM pppoe_accounts WHERE service_plan_id = NEW.id LOOP
-        PERFORM radius_reconcile_pppoe(r);
+    FOR rp IN SELECT * FROM pppoe_accounts WHERE service_plan_id = NEW.id LOOP
+        PERFORM radius_reconcile_pppoe(rp);
     END LOOP;
-    FOR r IN SELECT * FROM hotspot_vouchers WHERE plan_id = NEW.id LOOP
-        PERFORM radius_reconcile_voucher(r);
+    FOR rv IN SELECT * FROM hotspot_vouchers WHERE plan_id = NEW.id LOOP
+        PERFORM radius_reconcile_voucher(rv);
     END LOOP;
     RETURN NEW;
 END;
@@ -358,16 +359,17 @@ FOR EACH ROW EXECUTE FUNCTION trg_radius_plan_sync();
 
 DO $$
 DECLARE
-    r RECORD;
+    rp pppoe_accounts%ROWTYPE;
+    rv hotspot_vouchers%ROWTYPE;
 BEGIN
     DELETE FROM radcheck WHERE source IN ('PPPOE', 'VOUCHER');
     DELETE FROM radreply  WHERE source IN ('PPPOE', 'VOUCHER');
 
-    FOR r IN SELECT * FROM pppoe_accounts LOOP
-        PERFORM radius_reconcile_pppoe(r);
+    FOR rp IN SELECT * FROM pppoe_accounts LOOP
+        PERFORM radius_reconcile_pppoe(rp);
     END LOOP;
 
-    FOR r IN SELECT * FROM hotspot_vouchers LOOP
-        PERFORM radius_reconcile_voucher(r);
+    FOR rv IN SELECT * FROM hotspot_vouchers LOOP
+        PERFORM radius_reconcile_voucher(rv);
     END LOOP;
 END $$;
