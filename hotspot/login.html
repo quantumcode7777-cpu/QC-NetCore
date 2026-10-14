@@ -64,7 +64,22 @@
   }
   .hint { font-size: 11px; color: #6b7d9f; text-align: center; margin-top: 14px; line-height: 1.6; }
   .foot { margin-top: 18px; font-size: 11px; color: #5b6b8c; }
+  /* Pass-through mode: the static shell stays hidden until JS decides
+     (redirect to portal vs. stay). The veil below is a separate top layer. */
+  html { background: #060a18; }
+  body { transition: opacity .25s; }
+  #shell { display: none; }
+  body.shell-visible #shell { display: block; }
+  .portal-veil { position: fixed; inset: 0; background: #060a18; color: #e8eefc; display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; z-index: 9999; padding: 24px; text-align: center; }
+  .portal-veil .v-logo { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #3b82f6, #06b6d4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; color: #fff; }
+  .portal-veil .v-title { font-size: 16px; font-weight: 800; }
+  .portal-veil .v-sub { font-size: 12px; color: #93a4c7; }
+  .portal-veil .qc-spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(120,150,220,.25); border-top-color: #5eead4; animation: qcspin .9s linear infinite; }
+  @keyframes qcspin { to { transform: rotate(360deg); } }
+  .portal-veil .v-stay { margin-top: 8px; border: 1px solid rgba(120,150,220,.35); background: transparent; color: #9fb2d8; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
 </style>
+<link rel="preconnect" href="https://billing.quantumcode.co.ke" />
+<noscript><style>#shell { display: block; }</style></noscript>
 $(if chap-id)
 <script src="/md5.js"></script>
 <script>
@@ -78,6 +93,7 @@ function doLogin() {
 $(endif)
 </head>
 <body>
+  <div id="shell">
   <div class="brand">
     <div class="logo">QC</div>
     <h1>QC NetCore Hotspot</h1>
@@ -136,6 +152,7 @@ $(endif)
 
   <div class="foot">Powered by QC NetCore &bull; billing.quantumcode.co.ke</div>
   <button class="btn green" style="width:100%;max-width:400px;margin-top:12px" onclick="buy('')">Open My WiFi Portal</button>
+  </div><!-- /#shell -->
 
   <form name="sendin" action="$(link-login-only)" method="post">
     <input type="hidden" name="username" />
@@ -231,23 +248,27 @@ $(endif)
    Skipped when returning with credentials (?username=), on explicit shell
    view (?shell=1), when a login error is shown, or if PORTAL_ORG is unset. */
 (function portalRedirect() {
+  function showShell() { document.body.classList.add('shell-visible'); }
   try {
     var q = location.search || '';
-    if (!PORTAL_ORG) return;
-    if (/[?&](username|shell)=/.test(q)) return;
-    if (document.querySelector('.error')) return;
+    if (!PORTAL_ORG) { showShell(); return; }
+    if (/[?&](username|shell)=/.test(q)) { showShell(); return; }
+    if (document.querySelector('.error')) { showShell(); return; }
     var overlay = document.createElement('div');
-    overlay.setAttribute('style', 'position:fixed;inset:0;background:rgba(6,10,24,.96);color:#e8eefc;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;z-index:9999;padding:24px;text-align:center;');
-    overlay.innerHTML = '<div style="font-size:16px;font-weight:800">Opening your WiFi portal&hellip;</div>' +
-      '<div style="font-size:12px;color:#93a4c7">Packages, vouchers and M-Pesa</div>' +
-      '<button id="stay-shell" style="margin-top:8px;border:1px solid rgba(120,150,220,.35);background:transparent;color:#9fb2d8;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer">I have a username &amp; password &mdash; stay here</button>';
+    overlay.className = 'portal-veil';
+    overlay.innerHTML = '<div class="v-logo">QC</div>' +
+      '<div class="qc-spin"></div>' +
+      '<div class="v-title">Opening your WiFi portal&hellip;</div>' +
+      '<div class="v-sub">Packages, vouchers and M-Pesa</div>' +
+      '<button id="stay-shell" class="v-stay">I have a username &amp; password &mdash; stay here</button>';
     document.body.appendChild(overlay);
-    var t = setTimeout(function () { window.location.href = portalUrl(''); }, 3000);
+    var t = setTimeout(function () { window.location.href = portalUrl(''); }, 800);
     document.getElementById('stay-shell').onclick = function () {
       clearTimeout(t);
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      showShell();
     };
-  } catch (e) { /* stay on the shell */ }
+  } catch (e) { showShell(); }
 })();
 </script>
 </body>
