@@ -47,6 +47,10 @@ export default function VouchersPage() {
   );
   const [quantity, setQuantity] = useState(20);
   const [prefix, setPrefix] = useState("VC");
+  const [isLoadingVouchers, setIsLoadingVouchers] = useState(false);
+  const [listError, setListError] = useState("");
+  const [genError, setGenError] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (isDemoMode) {
@@ -64,6 +68,8 @@ export default function VouchersPage() {
     setSelectedPlanId("");
 
     let cancelled = false;
+    setIsLoadingVouchers(true);
+    setListError("");
     fetch("/api/v1/service-plans?type=HOTSPOT", { cache: "no-store" })
       .then((res) => res.json())
       .then((json) => {
@@ -80,6 +86,25 @@ export default function VouchersPage() {
         // Leave plans empty on error for real accounts
       });
 
+    // Live vouchers for this organization (persisted — these are what the
+    // captive portal redeems). Demo mode keeps using in-memory seeds.
+    fetch("/api/v1/vouchers", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((json) => {
+        if (cancelled) return;
+        if (json?.success && Array.isArray(json.data)) {
+          setVouchers(json.data as HotspotVoucher[]);
+        } else {
+          setListError("Could not load saved vouchers. New batches still save correctly.");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setListError("Could not load saved vouchers. New batches still save correctly.");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingVouchers(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -91,38 +116,78 @@ export default function VouchersPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleGenerateBatch = (e: React.FormEvent) => {
+  const handleGenerateBatch = async (e: React.FormEvent) => {
     e.preventDefault();
     const plan = hotspotPlans.find((p) => p.id === selectedPlanId);
-    if (!plan) return;
+    if (!plan || isGenerating) return;
 
-    const orgId = isDemoMode
-      ? SEED_ORGANIZATION.id
-      : profile?.organization_id || "org-live";
-    const newBatchId = `batch-${Date.now()}`;
-    const newBatch: VoucherBatch = {
-      id: newBatchId,
-      organizationId: orgId,
-      planId: plan.id,
-      planName: `${plan.name} (${formatKES(plan.price)})`,
-      batchName: `${plan.name} - ${quantity}x Batch`,
-      quantity,
-      prefix,
-      generatedByName: profile?.full_name || "Operator",
-      createdAt: new Date().toISOString(),
-    };
+    // Demo mode: keep the in-memory preview behaviour.
+    if (isDemoMode) {
+      const orgId = SEED_ORGANIZATION.id;
+      const newBatchId = `batch-${Date.now()}`;
+      const newBatch: VoucherBatch = {
+        id: newBatchId,
+        organizationId: orgId,
+        planId: plan.id,
+        planName: `${plan.name} (${formatKES(plan.price)})`,
+        batchName: `${plan.name} - ${quantity}x Batch`,
+        quantity,
+        prefix,
+        generatedByName: profile?.full_name || "Operator",
+        createdAt: new Date().toISOString(),
+      };
 
-    const newVouchers = VoucherGenerator.generateVoucherBatch({
-      organizationId: orgId,
-      batchId: newBatchId,
-      plan,
-      quantity,
-      prefix,
-    });
+      const newVouchers = VoucherGenerator.generateVoucherBatch({
+        organizationId: orgId,
+        batchId: newBatchId,
+        plan,
+        quantity,
+        prefix,
+      });
 
-    setBatches([newBatch, ...batches]);
-    setVouchers([...newVouchers, ...vouchers]);
-    setIsGenerateModalOpen(false);
+      setBatches([newBatch, ...batches]);
+      setVouchers([...newVouchers, ...vouchers]);
+      setIsGenerateModalOpen(false);
+      return;
+    }
+
+    // Live mode: persist the batch — only saved vouchers redeem on the portal.
+    setIsGenerating(true);
+    setGenError("");
+    try {
+      const res = await fetch("/api/v1/vouchers/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: plan.id, quantity, prefix }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error || "Could not save the batch. Please try again.");
+      }
+      const created = json.data.vouchers as HotspotVoucher[];
+      if (json.data.batch) {
+        setBatches([
+          {
+            id: json.data.batch.id,
+            organizationId: json.data.batch.organizationId,
+            planId: json.data.batch.planId,
+            planName: json.data.batch.planName,
+            batchName: json.data.batch.batchName,
+            quantity: json.data.batch.quantity,
+            prefix: json.data.batch.prefix,
+            generatedByName: profile?.full_name || "Operator",
+            createdAt: json.data.batch.createdAt,
+          },
+          ...batches,
+        ]);
+      }
+      setVouchers([...created, ...vouchers]);
+      setIsGenerateModalOpen(false);
+    } catch (err) {
+      setGenError(err instanceof Error ? err.message : "Could not save the batch. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handlePrint = () => {
@@ -191,9 +256,14 @@ export default function VouchersPage() {
 
       {/* Vouchers Table */}
       <GlassCard>
+        {listError && !isDemoMode && (
+          <div className="mx-4 mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+            {listError}
+          </div>
+        )}
         {filteredVouchers.length === 0 ? (
           <div className="p-8 text-center text-xs text-muted-foreground">
-            No hotspot vouchers found.
+            {isLoadingVouchers ? "Loading saved vouchers…" : "No hotspot vouchers found."}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -333,11 +403,17 @@ export default function VouchersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-brand-btn transition"
+                  disabled={isGenerating}
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-brand-btn transition disabled:opacity-60"
                 >
-                  Generate {quantity} Tokens
+                  {isGenerating ? "Saving…" : `Generate ${quantity} Tokens`}
                 </button>
               </div>
+              {genError && (
+                <p className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold">
+                  {genError}
+                </p>
+              )}
             </form>
           </div>
         </div>

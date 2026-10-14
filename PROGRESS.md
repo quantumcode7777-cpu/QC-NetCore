@@ -196,7 +196,42 @@ no tunnel/poller needed):
   params, skips when an error box shows, CHAP/PAP variants, overlay.
 - Live proof needs: org slug, one AVAILABLE voucher on a HOTSPOT plan,
   `PORTAL_ORG` set + login.html re-uploaded, billing rebuilt in Coolify.
+- Tenant: org slug `dagi-net-3038` (Dagi Net).
+- Backend loop proven live (Oct 14): curl redeem `TEST-1234-ABCD` → USED +
+  `expires_at`, 022 trigger wrote the radcheck row with matching expiry.
+- Left: `PORTAL_ORG` + login.html re-upload + phone loop (portal → auto-online).
 - Open: redeem brute-force rate-limit (TODO); M-Pesa STK slice needs live
   Daraja keys (still placeholders in billing env).
 - Phase 2 config still to do on VPS after 022 is applied: `authorize_check_query`
   `AND (expires_at IS NULL OR expires_at > now())` — see `docs/FREERADIUS_RLM_SQL.md`.
+
+## 14. Phone loop + voucher backend (Oct 14, live fixes)
+
+- Plans/org fix: 5 HOTSPOT plans were seeded under QC org (`a0000000…`) so
+  `/api/v1/captive/public?org=dagi-net-3038` returned `plans: []`. Reassigned
+  all HOTSPOT plans to Dagi Net (`b9d1c320…`); portal now serves all 5 live
+  packages. (PPPOE plans stay with QC org; QC org has no portal config.)
+- Design is PUBLISHED for Dagi Net; `/captive?org=dagi-net-3038` renders 200.
+- `hotspot/login.html`: `PORTAL_ORG="dagi-net-3038"`; **direct-to-portal**
+  redirect (3s overlay, skips on `?username=` bounce-back / `?shell=1` / login
+  error / empty org; "stay here" escape for account logins); Voucher tab gained
+  an "Open Portal" button; M-Pesa tab's fake hardcoded prices removed (portal
+  shows live plans). JS syntax verified via node check script.
+- Router (KUTUS, WinBox by operator): walled-garden entries added for
+  `billing.quantumcode.co.ke`, `*.quantumcode.co.ke`, and `194.163.188.247:443`.
+  Confirmed: phone auto-lands on the designed portal (DGX WiFi branding).
+- Voucher bug found: dashboard "Generate Batch" only updated browser state —
+  nothing was ever written to Supabase, so dashboard codes (e.g. `QCT01`)
+  redeemed as "not valid". Fixed with a real backend:
+  `src/lib/vouchers/batch.ts` (pure: validation, crypto codes, `tests/…` 6/6),
+  `GET /api/v1/vouchers` (org-scoped list + plan join),
+  `POST /api/v1/vouchers/batch` (admin auth, plan must be org HOTSPOT+active,
+  batch + AVAILABLE vouchers insert, 23505-collision retry with rollback).
+  Dashboard page now loads live vouchers and POSTs on generate (demo mode
+  keeps in-memory seeds). Full suite: 90 pass + 1 skip.
+- `QCT01` inserted manually (Dagi Net, 1-Hour plan, AVAILABLE) so the operator
+  can test redemption immediately; `LOOP-TEST-7777` still AVAILABLE.
+- Note: `hotspot/login.html` copy also kept at
+  `Documents/Q biling system/hotspot/login.html` for WinBox upload.
+- Note: phone joined SSID `Tenda_ADB7EO` — verify that Tenda is bridge/AP-only
+  (no competing captive portal) in front of KUTUS.

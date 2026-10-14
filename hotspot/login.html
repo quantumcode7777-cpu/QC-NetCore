@@ -111,7 +111,8 @@ $(endif)
       $(endif)
     </div>
 
-    <!-- Voucher code (code as username AND password; adjust to your voucher format) -->
+    <!-- Voucher code: unused codes are redeemed on the portal (design + RADIUS write),
+         this form stays for the auto-login bounce after redemption. -->
     <div id="pane-voucher" class="pane">
       <form name="vlogin" action="$(link-login-only)" method="post" $(if chap-id) onSubmit="return doVoucher()" $(endif)>
         <input type="hidden" name="dst" value="$(link-orig)" />
@@ -120,24 +121,21 @@ $(endif)
         <input id="vcode" type="text" placeholder="e.g. ABCD-1234" autocomplete="off" />
         <button class="btn" type="submit">Redeem Voucher</button>
       </form>
+      <button class="btn green" style="margin-top:10px" onclick="buy('')">Open Portal</button>
+      <p class="hint">New (unredeemed) codes must be activated on the portal first &mdash; tap Open Portal and switch to the Voucher tab.</p>
     </div>
 
     <!-- Packages + M-Pesa checkout on the billing portal (walled-garden allowed) -->
     <div id="pane-mpesa" class="pane">
-      <div class="plans">
-        <div class="plan"><b>1 Hour</b><span>Fast browsing</span><div class="price">KSh 20</div><button onclick="buy('1hour')">Buy</button></div>
-        <div class="plan"><b>Daily</b><span>24 hours</span><div class="price">KSh 50</div><button onclick="buy('daily')">Buy</button></div>
-        <div class="plan"><b>Weekly</b><span>7 days</span><div class="price">KSh 250</div><button onclick="buy('weekly')">Buy</button></div>
-        <div class="plan"><b>Monthly</b><span>30 days</span><div class="price">KSh 1000</div><button onclick="buy('monthly')">Buy</button></div>
-      </div>
       <label>M-Pesa Phone Number</label>
       <input id="phone" type="tel" placeholder="0712 345 678" />
-      <button class="btn green" onclick="buy('')">Pay with M-Pesa</button>
-      <p class="hint">Prices are placeholders &mdash; edit them in this file to match your packages. Payment opens the QC NetCore portal; your device stays on this page until paid.</p>
+      <button class="btn green" onclick="buy('')">View Packages &amp; Pay</button>
+      <p class="hint">Packages, prices and payment load from the QC NetCore portal so they always match your account.</p>
     </div>
   </div>
 
   <div class="foot">Powered by QC NetCore &bull; billing.quantumcode.co.ke</div>
+  <button class="btn green" style="width:100%;max-width:400px;margin-top:12px" onclick="buy('')">Open My WiFi Portal</button>
 
   <form name="sendin" action="$(link-login-only)" method="post">
     <input type="hidden" name="username" />
@@ -173,16 +171,19 @@ function doVoucher() {
   return true;
 }
 $(endif)
-/* Set this to your organization slug (Supabase: SELECT slug FROM organizations). */
-var PORTAL_ORG = "";
-function buy(plan) {
-  var phone = document.getElementById('phone').value.replace(/[^0-9]/g, '');
-  var url = 'https://billing.quantumcode.co.ke/captive?mac=$(mac)&ip=$(ip)' +
+/* Organization slug for this hotspot (Supabase: SELECT slug FROM organizations). */
+var PORTAL_ORG = "dagi-net-3038";
+function portalUrl(plan) {
+  var phoneEl = document.getElementById('phone');
+  var phone = phoneEl ? phoneEl.value.replace(/[^0-9]/g, '') : '';
+  return 'https://billing.quantumcode.co.ke/captive?mac=$(mac)&ip=$(ip)' +
     (PORTAL_ORG ? '&org=' + encodeURIComponent(PORTAL_ORG) : '') +
     '&linklogin=' + encodeURIComponent('$(link-login-only)') +
     (plan ? '&plan=' + encodeURIComponent(plan) : '') +
     (phone ? '&phone=' + encodeURIComponent(phone) : '');
-  window.location.href = url;
+}
+function buy(plan) {
+  window.location.href = portalUrl(plan);
 }
 $(if chap-id)
 function autoSubmitAccount() { doLogin(); }
@@ -225,6 +226,28 @@ $(endif)
       autoSubmitAccount();
     }
   } catch (e) { /* fall through to the manual form */ }
+})();
+/* Direct-to-portal: first-time visitors go straight to the designed portal.
+   Skipped when returning with credentials (?username=), on explicit shell
+   view (?shell=1), when a login error is shown, or if PORTAL_ORG is unset. */
+(function portalRedirect() {
+  try {
+    var q = location.search || '';
+    if (!PORTAL_ORG) return;
+    if (/[?&](username|shell)=/.test(q)) return;
+    if (document.querySelector('.error')) return;
+    var overlay = document.createElement('div');
+    overlay.setAttribute('style', 'position:fixed;inset:0;background:rgba(6,10,24,.96);color:#e8eefc;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;z-index:9999;padding:24px;text-align:center;');
+    overlay.innerHTML = '<div style="font-size:16px;font-weight:800">Opening your WiFi portal&hellip;</div>' +
+      '<div style="font-size:12px;color:#93a4c7">Packages, vouchers and M-Pesa</div>' +
+      '<button id="stay-shell" style="margin-top:8px;border:1px solid rgba(120,150,220,.35);background:transparent;color:#9fb2d8;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer">I have a username &amp; password &mdash; stay here</button>';
+    document.body.appendChild(overlay);
+    var t = setTimeout(function () { window.location.href = portalUrl(''); }, 3000);
+    document.getElementById('stay-shell').onclick = function () {
+      clearTimeout(t);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+  } catch (e) { /* stay on the shell */ }
 })();
 </script>
 </body>
