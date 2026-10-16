@@ -27,6 +27,8 @@ export interface NavItem {
   keywords?: string;
   /** When set, only these roles (or demo mode) may see the entry. */
   roles?: string[];
+  /** When set, these roles never see the entry (even outside demo mode). */
+  hideFor?: string[];
 }
 export interface NavGroup {
   id: string;
@@ -34,45 +36,52 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+/**
+ * ISP-operator tooling. The SaaS owner never sees these — their console is
+ * ISP Management + Settings; operator pages are org-scoped and would only
+ * ever show the (empty) platform org.
+ */
+const HIDE_FROM_OWNER: { hideFor: string[] } = { hideFor: ["super_admin"] };
+
 export const NAV_GROUPS: NavGroup[] = [
   {
     id: "overview",
     label: "Overview",
-    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, keywords: "home operations" }],
+    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, keywords: "home operations", ...HIDE_FROM_OWNER }],
   },
   {
     id: "customers",
     label: "Customers",
     items: [
-      { href: "/customers", label: "Subscribers", icon: Users, keywords: "customers pppoe accounts" },
-      { href: "/technicians", label: "Field Operations", icon: Wrench, keywords: "technicians work orders installs" },
-      { href: "/sms", label: "SMS", icon: MessageSquare, keywords: "sms communications bulk messages templates notifications phone" },
+      { href: "/customers", label: "Subscribers", icon: Users, keywords: "customers pppoe accounts", ...HIDE_FROM_OWNER },
+      { href: "/technicians", label: "Field Operations", icon: Wrench, keywords: "technicians work orders installs", ...HIDE_FROM_OWNER },
+      { href: "/sms", label: "SMS", icon: MessageSquare, keywords: "sms communications bulk messages templates notifications phone", ...HIDE_FROM_OWNER },
     ],
   },
   {
     id: "network",
     label: "Network",
     items: [
-      { href: "/routers", label: "Routers", icon: RouterIcon, keywords: "mikrotik fleet wireguard" },
-      { href: "/monitoring", label: "Monitoring", icon: Activity, keywords: "telemetry alerts noc" },
-      { href: "/vouchers", label: "Hotspot Vouchers", icon: Ticket, keywords: "hotspot voucher codes" },
+      { href: "/routers", label: "Routers", icon: RouterIcon, keywords: "mikrotik fleet wireguard", ...HIDE_FROM_OWNER },
+      { href: "/monitoring", label: "Monitoring", icon: Activity, keywords: "telemetry alerts noc", ...HIDE_FROM_OWNER },
+      { href: "/vouchers", label: "Hotspot Vouchers", icon: Ticket, keywords: "hotspot voucher codes", ...HIDE_FROM_OWNER },
     ],
   },
   {
     id: "billing",
     label: "Billing",
     items: [
-      { href: "/plans", label: "Packages", icon: Layers, keywords: "plans service speed price" },
-      { href: "/billing", label: "Payments", icon: CreditCard, keywords: "billing mpesa invoices transactions" },
+      { href: "/plans", label: "Packages", icon: Layers, keywords: "plans service speed price", ...HIDE_FROM_OWNER },
+      { href: "/billing", label: "Payments", icon: CreditCard, keywords: "billing mpesa invoices transactions", ...HIDE_FROM_OWNER },
     ],
   },
   {
     id: "portals",
     label: "Portals",
     items: [
-      { href: "/portal", label: "Customer Self-Care", icon: UserCheck, keywords: "portal" },
-      { href: "/captive", label: "Captive Portal", icon: Wifi, keywords: "hotspot login" },
-      { href: "/settings/captive-portal", label: "Portal Designer", icon: Paintbrush, keywords: "captive portal branding template customize hotspot login page" },
+      { href: "/portal", label: "Customer Self-Care", icon: UserCheck, keywords: "portal", ...HIDE_FROM_OWNER },
+      { href: "/captive", label: "Captive Portal", icon: Wifi, keywords: "hotspot login", ...HIDE_FROM_OWNER },
+      { href: "/settings/captive-portal", label: "Portal Designer", icon: Paintbrush, keywords: "captive portal branding template customize hotspot login page", ...HIDE_FROM_OWNER },
     ],
   },
   {
@@ -96,7 +105,11 @@ export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 /** Role-filtered nav (demo mode sees everything, like today). */
 export function visibleNavItems(role?: string | null, isDemoMode?: boolean): NavItem[] {
   if (isDemoMode) return ALL_NAV_ITEMS;
-  return ALL_NAV_ITEMS.filter((i) => !i.roles || (role != null && i.roles.includes(role)));
+  return ALL_NAV_ITEMS.filter((i) => {
+    if (i.hideFor && role != null && i.hideFor.includes(role)) return false;
+    if (!i.roles) return true;
+    return role != null && i.roles.includes(role);
+  });
 }
 
 /** Bottom bar on phones: the four things operators reach for most. */

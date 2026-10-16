@@ -5,14 +5,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Sidebar } from "./Sidebar";
-import { PRIMARY_MOBILE_ITEMS } from "./nav";
+import { PRIMARY_MOBILE_ITEMS, visibleNavItems } from "./nav";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { profile, isDemoMode } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isSecondaryActive = !PRIMARY_MOBILE_ITEMS.some((i) => i.href === pathname);
+  // Role-aware: operator shortcuts that are hidden for this role fall back
+  // to the first visible entries (e.g. owner gets ISP Management + Settings).
+  const visible = visibleNavItems(profile?.role, isDemoMode);
+  const preferred = PRIMARY_MOBILE_ITEMS.filter((i) => visible.some((v) => v.href === i.href));
+  const mobileItems = (preferred.length > 0 ? preferred : visible).slice(0, 4);
+
+  const isSecondaryActive = !mobileItems.some((i) => i.href === pathname);
 
   return (
     <>
@@ -38,7 +46,7 @@ export function BottomNav() {
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="mx-auto flex h-14 max-w-md items-stretch">
-          {PRIMARY_MOBILE_ITEMS.map((item) => {
+          {mobileItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
