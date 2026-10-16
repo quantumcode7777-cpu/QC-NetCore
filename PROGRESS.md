@@ -235,3 +235,49 @@ no tunnel/poller needed):
   `Documents/Q biling system/hotspot/login.html` for WinBox upload.
 - Note: phone joined SSID `Tenda_ADB7EO` — verify that Tenda is bridge/AP-only
   (no competing captive portal) in front of KUTUS.
+
+## 15. SaaS owner console (Oct 15–16)
+
+- Accounts: `langatgt7@gmail.com` = existing login `92412bee…` (was briefly
+  promoted then reverted — now `isp_owner` of Dagi Net again; note its password
+  was overwritten to `Vgtp6I1aRcvEZhGr`, customer must change it).
+  `langatgt2@gmail.com` = new super_admin `744c71a0…` on platform org
+  (temp password issued, must change). Created via Auth Admin API + profiles row.
+- Problem seen: owner login showed the same org dashboard (zeros on platform
+  org). Fixed with a real owner console instead of reusing the ISP dashboard.
+- `GET/POST /api/v1/admin/isps` + `GET/PATCH /api/v1/admin/isps/[id]`:
+  super_admin-only (new `authorizeSuperAdmin`), per-ISP stats rollup
+  (routers/customers/plans/vouchers/users/revenue/portal), create (slug
+  validation, 409 on taken), suspend/activate (blocks portal+redeem).
+  Pure logic `src/lib/admin/isps.ts`, `tests/admin-isps.test.mjs`.
+- UI `src/app/admin/isps` (list, onboard modal, detail drawer, share editor);
+  `/dashboard` redirects super_admin → `/admin/isps`.
+- Nav is role-gated now (`roles` + `hideFor` in `nav.ts`, applied to Sidebar,
+  mobile BottomNav with fallback items, quick-jump). super_admin sees ONLY
+  ISP Management + Settings (+ ISP Billing below); operators unchanged.
+- Build lesson: Coolify `next build` type-checks — `b301c25` failed on a TS
+  cast in the ISP detail route (fixed `d4fcbf1`). `node_modules` now installed
+  in the clone: run `tsc --noEmit` locally BEFORE every push.
+- Full suite at last check: 101 pass + 1 skip.
+
+## 16. ISP revenue-share billing + invoice SMS (Oct 16, `7cafdf1`)
+
+- Model (user chose revenue share): `organizations.revenue_share_pct`
+  (default 10) + new `isp_invoices` table — migration
+  `supabase/migrations/023_isp_billing.sql` (RUN in SQL editor BEFORE/A.S.A.P.
+  after deploy; service_role-only RLS like 022; UNIQUE(org, year, month)).
+- Flow: draft invoice (ISP + YYYY-MM + share% + due) → base auto-summed from
+  that month's COMPLETED payments → total = base × share. DRAFT create is
+  idempotent; finalized periods 409.
+- Real SMS: new server-only `src/lib/sms/sender.ts` (Africa's Talking,
+  env `AFRICASTALKING_USERNAME/_API_KEY[/_SENDER_ID]`; `sandbox` username =
+  test gateway; UNCONFIGURED surfaced honestly in UI). Note: the old
+  `src/lib/sms/engine.ts` never actually sends — in-memory/demo only.
+- Endpoints (super_admin): `GET/POST /api/v1/admin/billing`,
+  `POST /api/v1/admin/billing/[id]/send` (DRAFT→SENT, resend allowed, stamps
+  sent_at/sent_to), `PATCH … pay|void` (partial→PAID rollup).
+  Pure logic `src/lib/admin/isp-billing.ts` + `tests/admin-isp-billing.test.mjs`.
+- UI `src/app/admin/billing` (outstanding/collected/overdue cards, create/pay/
+  send/void, SMS status banner). Nav: "ISP Billing" (super_admin only).
+- Still needed from operator: run 023 SQL; set AT keys in Coolify + redeploy.
+  Live test: draft Dagi Net October invoice → send → record payment.
