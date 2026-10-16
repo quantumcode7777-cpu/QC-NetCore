@@ -5,6 +5,7 @@ import {
   type AnyClient,
 } from "@/lib/captive/server";
 import { aggregateIspStats, emptyStats, validateUpdateOrg } from "@/lib/admin/isps";
+import { smsProviderStatus } from "@/lib/sms/sender";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,14 @@ async function loadOrg(db: AnyClient, id: string) {
 }
 
 /**
- * GET /api/v1/admin/isps/[id] — one ISP with routers, plans, users,
- * portal status and recent payments. Super-admin only.
+ * GET /api/v1/admin/isps/[id] — one ISP workspace: routers, customers,
+ * plans, users, portal status, invoices, recent payments, plus platform
+ * integration status (SMS / M-Pesa). Super-admin only.
+ * Query: ?search= filters customers by name/phone (max 200).
  */
-export async function GET(_req: NextRequest, { params }: Ctx) {
+export async function GET(req: NextRequest, { params }: Ctx) {
   const { id } = await params;
+  const search = new URL(req.url).searchParams.get("search")?.trim() ?? "";
   const auth = await authorizeSuperAdmin();
   if (!auth.ok) return auth.response;
 
@@ -39,19 +43,31 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 
     const [
       { data: routers },
-      { data: customers },
+      { data: customersRows },
+      { count: customerTotal },
       { data: plans },
       { data: profiles },
       { data: vouchers },
       { data: portalConfigs },
       { data: payments },
+      { data: ispInvoices },
     ] = await Promise.all([
       db
         .from("routers")
         .select("id, name, management_ip, status, last_seen_at, organization_id")
         .eq("organization_id", id)
         .order("name", { ascending: true }),
-      db.from("customers").select("organization_id").eq("organization_id", id),
+      (() => {
+        let q = db
+          .from("customers")
+          .select("id, account_number, full_name, phone_number, status, balance_due, created_at, organization_id")
+          .eq("organization_id", id)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (search) q = q.or(`full_name.ilike.%${search}%,phone_number.ilike.%${search}%,account_number.ilike.%${search}%`);
+        return q;
+      })(),
+      db.from("customers").select("id", { count: "exact" }).eq("organization_id", id),
       db
         .from("plans")
         .select("id, name, service_type, price, is_active, organization_id")
@@ -77,19 +93,27 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
         .eq("organization_id", id)
         .order("created_at", { ascending: false })
         .limit(10),
+      db
+        .from("isp_invoices")
+        .select("id, invoice_number, period_year, period_month, total_amount, amount_paid, balance_due, status, due_date, organization_id")
+        .eq("organization_id", id)
+        .order("period_year", { ascending: false })
+        .order("period_month", { ascending: false })
+        .limit(12),
     ]);
 
     // Every row is already org-filtered, so pass them straight through —
     // no lossy re-casts (the client infers select shapes).
     const stats = aggregateIspStats({
       routers: (routers ?? []) as Array<{ organization_id: string }>,
-      customers: (customers ?? []) as Array<{ organization_id: string }>,
+      customers: (customersRows ?? []) as Array<{ organization_id: string }>,
       plans: (plans ?? []) as Array<{ organization_id: string; service_type: string }>,
       vouchers: (vouchers ?? []) as Array<{ organization_id: string; status: string }>,
       profiles: (profiles ?? []) as Array<{ organization_id: string }>,
       payments: (payments ?? []) as Array<{ organization_id: string; amount: number; status: string }>,
       portalConfigs: (portalConfigs ?? []) as Array<{ organization_id: string; status: string }>,
     })[id] ?? emptyStats();
+    stats.customers = customerTotal ?? stats.customers;
 
     return NextResponse.json({
       success: true,
@@ -106,6 +130,16 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
         isActive: Boolean(org.is_active),
         createdAt: String(org.created_at),
         stats,
+        customerTotal: customerTotal ?? 0,
+        customers: ((customersRows ?? []) as Array<Record<string, unknown>>).map((c) => ({
+          id: String(c.id),
+          accountNumber: String(c.account_number),
+          fullName: String(c.full_name),
+          phoneNumber: String(c.phone_number),
+          status: String(c.status),
+          balanceDue: Number(c.balance_due),
+          createdAt: String(c.created_at),
+        })),
         routers: ((routers ?? []) as Array<Record<string, unknown>>).map((r) => ({
           id: String(r.id),
           name: String(r.name),
@@ -139,6 +173,24 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
           status: String(p.status),
           createdAt: String(p.created_at),
         })),
+        invoices: ((ispInvoices ?? []) as Array<Record<string, unknown>>).map((v) => ({
+          id: String(v.id),
+          invoiceNumber: String(v.invoice_number),
+          year: Number(v.period_year),
+          month: Number(v.period_month),
+          totalAmount: Number(v.total_amount),
+          amountPaid: Number(v.amount_paid),
+          balanceDue: Number(v.balance_due),
+          status: String(v.status),
+          dueDate: String(v.due_date),
+        })),
+        integrations: {
+          sms: smsProviderStatus(),
+          mpesa: {
+            configured: Boolean(process.env.DARAJA_CONSUMER_KEY?.trim() && process.env.DARAJA_CONSUMER_SECRET?.trim()),
+          },
+          radius: { configured: true },
+        },
       },
     });
   } catch (err) {

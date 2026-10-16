@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   Building2,
@@ -8,18 +9,14 @@ import {
   Eye,
   Power,
   PowerOff,
-  Users,
-  Router as RouterIcon,
-  Ticket,
-  CreditCard,
-  Wifi,
   RefreshCw,
   ShieldAlert,
+  Wifi,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlassBadge } from "@/components/ui/GlassBadge";
 import { useAuth } from "@/lib/auth/auth-context";
-import { formatKES, formatShortDate } from "@/lib/utils";
+import { formatKES } from "@/lib/utils";
 
 interface IspStats {
   routers: number;
@@ -49,14 +46,6 @@ interface Isp {
   stats: IspStats;
 }
 
-interface IspDetail extends Isp {
-  routers: Array<{ id: string; name: string; managementIp: string | null; status: string; lastSeenAt: string | null }>;
-  plans: Array<{ id: string; name: string; serviceType: string; price: number; isActive: boolean }>;
-  users: Array<{ id: string; fullName: string | null; role: string; isActive: boolean; createdAt: string }>;
-  portalConfigs: Array<{ id: string; status: string; version: number; updatedAt: string }>;
-  recentPayments: Array<{ id: string; amount: number; status: string; createdAt: string }>;
-}
-
 const emptyStats: IspStats = {
   routers: 0,
   customers: 0,
@@ -81,16 +70,13 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 
 export default function IspManagementPage() {
   const { isDemoMode, profile } = useAuth();
+  const router = useRouter();
   const isSuperAdmin = isDemoMode || profile?.role === "super_admin";
 
   const [isps, setIsps] = useState<Isp[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<IspDetail | null>(null);
-  const [isDetailLoading, setIsDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState("");
   const [actionError, setActionError] = useState("");
   const [actingId, setActingId] = useState<string | null>(null);
 
@@ -102,9 +88,6 @@ export default function IspManagementPage() {
   const [fCurrency, setFCurrency] = useState("KES");
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  // Revenue-share editor (detail drawer)
-  const [shareInput, setShareInput] = useState("");
-  const [isSavingShare, setIsSavingShare] = useState(false);
 
   const load = useCallback(async () => {
     if (isDemoMode) {
@@ -141,23 +124,7 @@ export default function IspManagementPage() {
     );
   }, [isps]);
 
-  const openDetail = async (id: string) => {
-    setSelectedId(id);
-    setDetail(null);
-    setDetailError("");
-    setIsDetailLoading(true);
-    try {
-      const res = await fetch(`/api/v1/admin/isps/${id}`, { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.error || "Could not load ISP details.");
-      setDetail(json.data as IspDetail);
-      setShareInput(String((json.data as IspDetail).sharePct ?? 10));
-    } catch (err) {
-      setDetailError(err instanceof Error ? err.message : "Could not load ISP details.");
-    } finally {
-      setIsDetailLoading(false);
-    }
-  };
+  const openWorkspace = (id: string) => router.push(`/admin/isps/${id}`);
 
   const setActive = async (id: string, isActive: boolean) => {
     setActingId(id);
@@ -171,32 +138,10 @@ export default function IspManagementPage() {
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.error || "Could not update the ISP.");
       setIsps((prev) => prev.map((i) => (i.id === id ? { ...i, isActive: json.data.isActive } : i)));
-      setDetail((prev) => (prev && prev.id === id ? { ...prev, isActive: json.data.isActive } : prev));
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Could not update the ISP.");
     } finally {
       setActingId(null);
-    }
-  };
-
-  const saveShare = async () => {
-    if (!detail || isSavingShare) return;
-    setIsSavingShare(true);
-    setActionError("");
-    try {
-      const res = await fetch(`/api/v1/admin/isps/${detail.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ revenue_share_pct: Number(shareInput) }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.error || json?.message || "Could not save the share.");
-      setDetail((prev) => (prev ? { ...prev, sharePct: json.data.sharePct } : prev));
-      setIsps((prev) => prev.map((i) => (i.id === detail.id ? { ...i, sharePct: json.data.sharePct } : i)));
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Could not save the share.");
-    } finally {
-      setIsSavingShare(false);
     }
   };
 
@@ -322,7 +267,11 @@ export default function IspManagementPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {isps.map((isp) => (
-                  <tr key={isp.id} className="hover:bg-surface-elevated/40 transition">
+                  <tr
+                    key={isp.id}
+                    onClick={() => openWorkspace(isp.id)}
+                    className="hover:bg-surface-elevated/40 transition cursor-pointer"
+                  >
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2.5">
                         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
@@ -360,10 +309,10 @@ export default function IspManagementPage() {
                       </GlassBadge>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={() => openDetail(isp.id)}
-                          title="Inspect ISP"
+                          onClick={() => openWorkspace(isp.id)}
+                          title="Open ISP workspace"
                           className="p-2 rounded-lg hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition"
                         >
                           <Eye className="w-4 h-4" />
@@ -385,163 +334,6 @@ export default function IspManagementPage() {
           </div>
         )}
       </GlassCard>
-
-      {/* Detail drawer */}
-      {selectedId && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm" onClick={() => setSelectedId(null)}>
-          <div
-            className="w-full max-w-xl h-full overflow-y-auto bg-surface border-l border-border p-6 space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <h3 className="font-extrabold text-foreground text-base">
-                {detail ? detail.name : "Loading ISP…"}
-              </h3>
-              <button onClick={() => setSelectedId(null)} className="text-muted-foreground hover:text-foreground">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            {isDetailLoading && <p className="text-xs text-muted-foreground">Loading details…</p>}
-            {detailError && (
-              <p className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold">
-                {detailError}
-              </p>
-            )}
-            {detail && (
-              <>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <GlassBadge variant={detail.isActive ? "success" : "neutral"} size="sm">
-                    <span>{detail.isActive ? "Active" : "Suspended"}</span>
-                  </GlassBadge>
-                  <span className="text-[11px] text-muted-foreground font-mono">/{detail.slug}</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    Since {formatShortDate(detail.createdAt)}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <StatCard label="Routers" value={String(detail.stats.routers)} />
-                  <StatCard label="Subscribers" value={String(detail.stats.customers)} />
-                  <StatCard label="Team members" value={String(detail.stats.users)} />
-                  <StatCard label="Revenue" value={formatKES(detail.stats.revenueCompleted)} />
-                </div>
-
-                <section className="p-3 rounded-xl bg-surface-elevated/50 border border-border">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
-                    Platform fee — hotspot revenue share
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.5}
-                      value={shareInput}
-                      onChange={(e) => setShareInput(e.target.value)}
-                      className="w-24 px-3 py-2 rounded-xl bg-surface border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
-                    />
-                    <span className="text-xs text-muted-foreground">% of collected revenue</span>
-                    <button
-                      onClick={saveShare}
-                      disabled={isSavingShare}
-                      className="ml-auto px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition disabled:opacity-60"
-                    >
-                      {isSavingShare ? "Saving…" : "Save"}
-                    </button>
-                  </div>
-                </section>
-
-                <section>
-                  <h4 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
-                    <RouterIcon className="w-3.5 h-3.5" /> Routers ({detail.routers.length})
-                  </h4>
-                  {detail.routers.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No routers registered.</p>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {detail.routers.map((r) => (
-                        <li key={r.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface-elevated/50 border border-border text-xs">
-                          <span className="font-bold text-foreground">{r.name}</span>
-                          <span className="text-muted-foreground font-mono">{r.managementIp ?? "—"} · {r.status}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                <section>
-                  <h4 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
-                    <Ticket className="w-3.5 h-3.5" /> Packages ({detail.plans.length})
-                  </h4>
-                  {detail.plans.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No packages defined.</p>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {detail.plans.map((p) => (
-                        <li key={p.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface-elevated/50 border border-border text-xs">
-                          <span className="font-bold text-foreground">{p.name}</span>
-                          <span className="text-muted-foreground">{p.serviceType} · {formatKES(p.price)}{p.isActive ? "" : " · off"}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                <section>
-                  <h4 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
-                    <Users className="w-3.5 h-3.5" /> Team ({detail.users.length})
-                  </h4>
-                  {detail.users.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No operators yet.</p>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {detail.users.map((u) => (
-                        <li key={u.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface-elevated/50 border border-border text-xs">
-                          <span className="font-bold text-foreground">{u.fullName ?? "Unnamed"}</span>
-                          <span className="text-muted-foreground font-mono">{u.role}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                <section>
-                  <h4 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
-                    <CreditCard className="w-3.5 h-3.5" /> Recent payments
-                  </h4>
-                  {detail.recentPayments.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No payments recorded.</p>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {detail.recentPayments.map((p) => (
-                        <li key={p.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface-elevated/50 border border-border text-xs">
-                          <span className="font-bold text-foreground">{formatKES(p.amount)}</span>
-                          <span className="text-muted-foreground">{p.status} · {formatShortDate(p.createdAt)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                <button
-                  onClick={() => setActive(detail.id, !detail.isActive)}
-                  disabled={actingId === detail.id}
-                  className={`w-full px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-60 ${
-                    detail.isActive
-                      ? "bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400"
-                      : "bg-emerald-600 text-white"
-                  }`}
-                >
-                  {actingId === detail.id
-                    ? "Working…"
-                    : detail.isActive
-                      ? "Suspend ISP (blocks portal + new redemptions)"
-                      : "Resume ISP"}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Create modal */}
       {isCreateOpen && (

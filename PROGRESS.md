@@ -297,3 +297,15 @@ no tunnel/poller needed):
 - SMS v2 itemized, zero lines omitted, still one segment in common cases.
 - UI: create modal has hotspot % (ISP default), PPPoE $/user, FX, custom
   amount+label; table shows H/P/C breakdown with tooltip on the base.
+
+## 18. ISP workspace pages (Oct 16)
+
+- Clicking an ISP now opens `/admin/isps/[id]`: header (contact, status,
+  suspend/resume), stat cards, searchable customers table (server `?search=`,
+  200 cap + total), routers, platform invoices, team, platform-fee editor.
+- Integrations panel (honest status, no fake controls): captive portal
+  (published? + preview link), SMS (unconfigured/sandbox/production),
+  M-Pesa Daraja (keys present or not), RADIUS (FreeRADIUS live). Per-ISP
+  Daraja/SMS keys don't exist — platform-global env only (see §16 gaps).
+- Detail API extended: customers (+ exact total), isp_invoices, integrations
+  status. List page drawer removed (navigates to workspace instead).
