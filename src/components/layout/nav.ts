@@ -13,6 +13,7 @@ import {
   Paintbrush,
   MessageSquare,
   Building2,
+  Receipt,
 } from "lucide-react";
 
 /**
@@ -94,6 +95,13 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "ISP Management",
         icon: Building2,
         keywords: "saas owner tenants isps onboard suspend platform",
+        roles: ["super_admin"],
+      },
+      {
+        href: "/admin/billing",
+        label: "ISP Billing",
+        icon: Receipt,
+        keywords: "saas owner invoices revenue share sms bill isp",
         roles: ["super_admin"],
       },
     ],

@@ -14,7 +14,7 @@ async function loadOrg(db: AnyClient, id: string) {
   const { data: org } = await db
     .from("organizations")
     .select(
-      "id, name, slug, business_number, email, phone, currency, timezone, is_active, created_at, updated_at"
+      "id, name, slug, business_number, email, phone, currency, timezone, revenue_share_pct, is_active, created_at, updated_at"
     )
     .eq("id", id)
     .maybeSingle();
@@ -102,6 +102,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
         phone: String(org.phone),
         currency: String(org.currency ?? "KES"),
         timezone: String(org.timezone ?? "Africa/Nairobi"),
+        sharePct: Number(org.revenue_share_pct ?? 10),
         isActive: Boolean(org.is_active),
         createdAt: String(org.created_at),
         stats,
@@ -181,7 +182,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       .from("organizations")
       .update({ ...checked.value, updated_at: new Date().toISOString() })
       .eq("id", id)
-      .select("id, name, slug, email, phone, currency, is_active, updated_at")
+      .select("id, name, slug, email, phone, currency, revenue_share_pct, is_active, updated_at")
       .single();
     if (error || !updated) {
       console.error("[Admin] ISP update failed:", error);
@@ -197,6 +198,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         email: String(u.email),
         phone: String(u.phone),
         currency: String(u.currency ?? "KES"),
+        sharePct: Number(u.revenue_share_pct ?? 10),
         isActive: Boolean(u.is_active),
         updatedAt: String(u.updated_at),
       },

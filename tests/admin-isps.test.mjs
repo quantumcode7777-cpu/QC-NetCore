@@ -59,6 +59,10 @@ test("isps — update validation (partial patch, typed fields)", () => {
   assert.deepEqual(patch.value, { phone: "+254711111111", is_active: false });
   assert.equal(patch.empty, false);
 
+  const share = validateUpdateOrg({ revenue_share_pct: 12.5 });
+  assert.equal(share.ok, true);
+  assert.deepEqual(share.value, { revenue_share_pct: 12.5 });
+
   const empty = validateUpdateOrg({});
   assert.equal(empty.ok, true);
   assert.equal(empty.empty, true);
@@ -66,6 +70,10 @@ test("isps — update validation (partial patch, typed fields)", () => {
   const bad = validateUpdateOrg({ is_active: "yes" });
   assert.equal(bad.ok, false);
   assert.equal(bad.code, "BAD_STATUS");
+
+  const badShare = validateUpdateOrg({ revenue_share_pct: 150 });
+  assert.equal(badShare.ok, false);
+  assert.equal(badShare.code, "BAD_SHARE");
 });
 
 test("isps — stats aggregation rolls rows into per-org blocks", () => {

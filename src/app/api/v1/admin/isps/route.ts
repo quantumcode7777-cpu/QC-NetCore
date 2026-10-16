@@ -33,7 +33,7 @@ export async function GET() {
       db
         .from("organizations")
         .select(
-          "id, name, slug, business_number, email, phone, currency, timezone, is_active, created_at, updated_at"
+          "id, name, slug, business_number, email, phone, currency, timezone, revenue_share_pct, is_active, created_at, updated_at"
         )
         .order("created_at", { ascending: true }),
       db.from("routers").select("organization_id"),
@@ -66,6 +66,7 @@ export async function GET() {
       phone: String(o.phone),
       currency: String(o.currency ?? "KES"),
       timezone: String(o.timezone ?? "Africa/Nairobi"),
+      sharePct: Number(o.revenue_share_pct ?? 10),
       isActive: Boolean(o.is_active),
       createdAt: String(o.created_at),
       updatedAt: o.updated_at ? String(o.updated_at) : null,

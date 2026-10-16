@@ -71,16 +71,17 @@ export interface UpdateOrgInput {
   phone?: unknown;
   currency?: unknown;
   is_active?: unknown;
+  revenue_share_pct?: unknown;
 }
 
 export type UpdateValidation =
-  | { ok: true; value: Record<string, string | boolean>; empty: boolean }
+  | { ok: true; value: Record<string, string | boolean | number>; empty: boolean }
   | { ok: false; status: number; code: string; message: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateUpdateOrg(input: UpdateOrgInput): UpdateValidation {
-  const patch: Record<string, string | boolean> = {};
+  const patch: Record<string, string | boolean | number> = {};
   if (input.name !== undefined) {
     const name = typeof input.name === "string" ? input.name.trim() : "";
     if (!name) return { ok: false, status: 400, code: "BAD_NAME", message: "Business name cannot be empty." };
@@ -106,6 +107,13 @@ export function validateUpdateOrg(input: UpdateOrgInput): UpdateValidation {
       return { ok: false, status: 400, code: "BAD_STATUS", message: "is_active must be true or false." };
     }
     patch.is_active = input.is_active;
+  }
+  if (input.revenue_share_pct !== undefined) {
+    const pct = typeof input.revenue_share_pct === "number" ? input.revenue_share_pct : Number(input.revenue_share_pct);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      return { ok: false, status: 400, code: "BAD_SHARE", message: "Revenue share must be between 0 and 100 percent." };
+    }
+    patch.revenue_share_pct = pct;
   }
   return { ok: true, value: patch, empty: Object.keys(patch).length === 0 };
 }

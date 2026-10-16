@@ -42,6 +42,7 @@ interface Isp {
   phone: string;
   currency: string;
   timezone: string;
+  sharePct: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string | null;
@@ -101,6 +102,9 @@ export default function IspManagementPage() {
   const [fCurrency, setFCurrency] = useState("KES");
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  // Revenue-share editor (detail drawer)
+  const [shareInput, setShareInput] = useState("");
+  const [isSavingShare, setIsSavingShare] = useState(false);
 
   const load = useCallback(async () => {
     if (isDemoMode) {
@@ -147,6 +151,7 @@ export default function IspManagementPage() {
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.error || "Could not load ISP details.");
       setDetail(json.data as IspDetail);
+      setShareInput(String((json.data as IspDetail).sharePct ?? 10));
     } catch (err) {
       setDetailError(err instanceof Error ? err.message : "Could not load ISP details.");
     } finally {
@@ -174,8 +179,28 @@ export default function IspManagementPage() {
     }
   };
 
-  const slugify = (name: string) =>
-    name
+  const saveShare = async () => {
+    if (!detail || isSavingShare) return;
+    setIsSavingShare(true);
+    setActionError("");
+    try {
+      const res = await fetch(`/api/v1/admin/isps/${detail.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ revenue_share_pct: Number(shareInput) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.error || json?.message || "Could not save the share.");
+      setDetail((prev) => (prev ? { ...prev, sharePct: json.data.sharePct } : prev));
+      setIsps((prev) => prev.map((i) => (i.id === detail.id ? { ...i, sharePct: json.data.sharePct } : i)));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Could not save the share.");
+    } finally {
+      setIsSavingShare(false);
+    }
+  };
+
+  const slugify = (name: string) =>    name
       .trim()
       .toLowerCase()
       .replace(/[\s_]+/g, "-")
@@ -197,7 +222,7 @@ export default function IspManagementPage() {
       });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.error || json?.message || "Could not create the ISP.");
-      setIsps((prev) => [...prev, { ...json.data, stats: emptyStats }]);
+      setIsps((prev) => [...prev, { ...json.data, sharePct: json.data.sharePct ?? 10, stats: emptyStats }]);
       setFName("");
       setFSlug("");
       setFEmail("");
@@ -399,6 +424,31 @@ export default function IspManagementPage() {
                   <StatCard label="Team members" value={String(detail.stats.users)} />
                   <StatCard label="Revenue" value={formatKES(detail.stats.revenueCompleted)} />
                 </div>
+
+                <section className="p-3 rounded-xl bg-surface-elevated/50 border border-border">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
+                    Platform fee — revenue share
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      value={shareInput}
+                      onChange={(e) => setShareInput(e.target.value)}
+                      className="w-24 px-3 py-2 rounded-xl bg-surface border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
+                    />
+                    <span className="text-xs text-muted-foreground">% of collected revenue</span>
+                    <button
+                      onClick={saveShare}
+                      disabled={isSavingShare}
+                      className="ml-auto px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition disabled:opacity-60"
+                    >
+                      {isSavingShare ? "Saving…" : "Save"}
+                    </button>
+                  </div>
+                </section>
 
                 <section>
                   <h4 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
