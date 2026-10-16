@@ -281,3 +281,19 @@ no tunnel/poller needed):
   send/void, SMS status banner). Nav: "ISP Billing" (super_admin only).
 - Still needed from operator: run 023 SQL; set AT keys in Coolify + redeploy.
   Live test: draft Dagi Net October invoice → send → record payment.
+
+## 17. Pricing-page invoice lines (Oct 16)
+
+- Invoices now follow the public pricing: HOTSPOT 3% of hotspot revenue,
+  PPPOE $0.25 x active users x FX, CUSTOM manual line (Enterprise/adjustments).
+- Hotspot base = COMPLETED payments attributed via customer→subscription→plan
+  (hotspot wins ties) + redeemed voucher face value in the month (prepaid
+  hotspot sales don't hit `payments` yet — noted future-dedup risk when the
+  hotspot M-Pesa flow lands). PPPoE users = distinct ACTIVE/GRACE customers on
+  PPPoE plans overlapping the month. FX manual snapshot (default 129 KES/$).
+- Migration `024_isp_invoice_lines.sql` (RUN AFTER 023; flips platform default
+  10→3% and backfills untouched 10s; adds line columns). `base_amount` now
+  means hotspot base; `share_pct` = hotspot %.
+- SMS v2 itemized, zero lines omitted, still one segment in common cases.
+- UI: create modal has hotspot % (ISP default), PPPoE $/user, FX, custom
+  amount+label; table shows H/P/C breakdown with tooltip on the base.

@@ -427,7 +427,7 @@ export default function IspManagementPage() {
 
                 <section className="p-3 rounded-xl bg-surface-elevated/50 border border-border">
                   <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground mb-2">
-                    Platform fee — revenue share
+                    Platform fee — hotspot revenue share
                   </h4>
                   <div className="flex items-center gap-2">
                     <input

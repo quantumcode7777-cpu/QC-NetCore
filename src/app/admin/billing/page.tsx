@@ -50,6 +50,13 @@ interface IspInvoice {
   ispName: string;
   ispSlug: string;
   ispPhone: string;
+  hotspotPayments: number;
+  voucherFaceValue: number;
+  pppoeUsers: number;
+  pppoeRateUsd: number;
+  fxRate: number;
+  customAmount: number;
+  customLabel: string | null;
 }
 
 const MONTH_NAMES = [
@@ -90,7 +97,11 @@ export default function IspBillingPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [cIsp, setCIsp] = useState("");
   const [cPeriod, setCPeriod] = useState(defaultPeriod());
-  const [cShare, setCShare] = useState("10");
+  const [cShare, setCShare] = useState("");
+  const [cPppoeRate, setCPppoeRate] = useState("0.25");
+  const [cFx, setCFx] = useState("129");
+  const [cCustom, setCCustom] = useState("");
+  const [cCustomLabel, setCCustomLabel] = useState("");
   const [cDue, setCDue] = useState(defaultDue());
   const [cNotes, setCNotes] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -158,7 +169,11 @@ export default function IspBillingPage() {
         body: JSON.stringify({
           organizationId: cIsp,
           period: cPeriod,
-          sharePct: Number(cShare),
+          sharePct: cShare === "" ? undefined : Number(cShare),
+          pppoeRateUsd: Number(cPppoeRate),
+          fxRate: Number(cFx),
+          customAmount: cCustom === "" ? 0 : Number(cCustom),
+          customLabel: cCustomLabel,
           dueDate: cDue,
           notes: cNotes,
         }),
@@ -344,7 +359,7 @@ export default function IspBillingPage() {
                 <tr>
                   <th className="py-3 px-4">Invoice</th>
                   <th className="py-3 px-4">ISP / Period</th>
-                  <th className="py-3 px-4">Base × Share</th>
+                  <th className="py-3 px-4">Lines</th>
                   <th className="py-3 px-4">Paid / Balance</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Due</th>
@@ -369,8 +384,18 @@ export default function IspBillingPage() {
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-muted-foreground">
-                      {formatKES(inv.baseAmount)} × {inv.sharePct}% ={" "}
-                      <span className="font-extrabold text-foreground">{formatKES(inv.totalAmount)}</span>
+                      <div title={`Payments ${formatKES(inv.hotspotPayments)} + vouchers ${formatKES(inv.voucherFaceValue)}`}>
+                        H: {inv.sharePct}% × {formatKES(inv.baseAmount)}
+                      </div>
+                      <div>
+                        P: {inv.pppoeUsers} × ${inv.pppoeRateUsd} × {inv.fxRate}
+                      </div>
+                      {inv.customAmount > 0 && (
+                        <div>
+                          C: {formatKES(inv.customAmount)}{inv.customLabel ? ` (${inv.customLabel})` : ""}
+                        </div>
+                      )}
+                      <div className="font-extrabold text-foreground">= {formatKES(inv.totalAmount)}</div>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="text-emerald-500 font-bold">{formatKES(inv.amountPaid)}</span>
@@ -478,7 +503,7 @@ export default function IspBillingPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                    Share % *
+                    Hotspot share %
                   </label>
                   <input
                     type="number"
@@ -487,6 +512,63 @@ export default function IspBillingPage() {
                     step={0.5}
                     value={cShare}
                     onChange={(e) => setCShare(e.target.value)}
+                    placeholder="ISP default"
+                    className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                    PPPoE $/user
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.01}
+                    value={cPppoeRate}
+                    onChange={(e) => setCPppoeRate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                    FX (KES per $)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    step={0.5}
+                    value={cFx}
+                    onChange={(e) => setCFx(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                    Custom (KES)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={cCustom}
+                    onChange={(e) => setCCustom(e.target.value)}
+                    placeholder="Enterprise / adj."
+                    className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                    Custom label
+                  </label>
+                  <input
+                    value={cCustomLabel}
+                    onChange={(e) => setCCustomLabel(e.target.value)}
+                    placeholder="e.g. Enterprise fee"
                     className="w-full px-3 py-2 rounded-xl bg-surface-elevated border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -515,7 +597,7 @@ export default function IspBillingPage() {
               </div>
               {selectedIsp && (
                 <p className="text-[11px] text-muted-foreground">
-                  Base = {selectedIsp.name}&apos;s completed collections for the month × {cShare}%.
+                  Hotspot {cShare || selectedIsp.sharePct}% of hotspot revenue + PPPoE users × ${cPppoeRate} × {cFx}.
                   SMS goes to {selectedIsp.phone} on send.
                 </p>
               )}

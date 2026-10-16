@@ -6,6 +6,11 @@
 
 export const ISP_SHARE_MIN_PCT = 0;
 export const ISP_SHARE_MAX_PCT = 100;
+/** Public pricing page: HOTSPOT 3% of revenue, PPPOE $0.25 / active user. */
+export const DEFAULT_HOTSPOT_PCT = 3;
+export const DEFAULT_PPPOE_RATE_USD = 0.25;
+/** Manual KES-per-USD snapshot (editable per invoice). */
+export const DEFAULT_FX_KES_PER_USD = 129;
 
 export type IspInvoiceStatus =
   | "DRAFT"
@@ -18,7 +23,11 @@ export type IspInvoiceStatus =
 export interface CreateIspInvoiceInput {
   organizationId?: unknown;
   period?: unknown; // "YYYY-MM"
-  sharePct?: unknown;
+  sharePct?: unknown; // hotspot % (defaults to the ISP's revenue_share_pct)
+  pppoeRateUsd?: unknown;
+  fxRate?: unknown; // KES per USD
+  customAmount?: unknown;
+  customLabel?: unknown;
   dueDate?: unknown; // "YYYY-MM-DD"
   notes?: unknown;
 }
@@ -27,7 +36,11 @@ export interface ValidIspInvoice {
   organizationId: string;
   year: number;
   month: number;
-  sharePct: number;
+  sharePct: number | null; // null = use the ISP's configured share
+  pppoeRateUsd: number;
+  fxRate: number;
+  customAmount: number;
+  customLabel: string;
   dueDate: string;
   notes: string;
 }
@@ -65,16 +78,48 @@ export function validateCreateIspInvoice(input: CreateIspInvoiceInput): IspInvoi
   if (!period) {
     return { ok: false, status: 400, code: "BAD_PERIOD", message: "Period must be YYYY-MM (e.g. 2026-10)." };
   }
-  const sharePct = typeof input.sharePct === "number" ? input.sharePct : Number(input.sharePct);
-  if (!Number.isFinite(sharePct) || sharePct < ISP_SHARE_MIN_PCT || sharePct > ISP_SHARE_MAX_PCT) {
-    return { ok: false, status: 400, code: "BAD_SHARE", message: "Revenue share must be between 0 and 100 percent." };
+  const shareRaw = input.sharePct;
+  let sharePct: number | null = null;
+  if (shareRaw !== undefined && shareRaw !== null && shareRaw !== "") {
+    const pct = typeof shareRaw === "number" ? shareRaw : Number(shareRaw);
+    if (!Number.isFinite(pct) || pct < ISP_SHARE_MIN_PCT || pct > ISP_SHARE_MAX_PCT) {
+      return { ok: false, status: 400, code: "BAD_SHARE", message: "Hotspot share must be between 0 and 100 percent." };
+    }
+    sharePct = pct;
   }
+  const rateRaw = input.pppoeRateUsd;
+  const pppoeRateUsd =
+    rateRaw === undefined || rateRaw === null || rateRaw === ""
+      ? DEFAULT_PPPOE_RATE_USD
+      : typeof rateRaw === "number"
+        ? rateRaw
+        : Number(rateRaw);
+  if (!Number.isFinite(pppoeRateUsd) || pppoeRateUsd < 0 || pppoeRateUsd > 100) {
+    return { ok: false, status: 400, code: "BAD_PPPOE_RATE", message: "PPPoE rate must be between 0 and 100 USD." };
+  }
+  const fxRaw = input.fxRate;
+  const fxRate =
+    fxRaw === undefined || fxRaw === null || fxRaw === "" ? DEFAULT_FX_KES_PER_USD : Number(fxRaw);
+  if (!Number.isFinite(fxRate) || fxRate <= 0 || fxRate > 10000) {
+    return { ok: false, status: 400, code: "BAD_FX", message: "Exchange rate must be a positive number." };
+  }
+  const customRaw = input.customAmount;
+  const customAmount =
+    customRaw === undefined || customRaw === null || customRaw === "" ? 0 : Number(customRaw);
+  if (!Number.isFinite(customAmount) || customAmount < 0 || customAmount > 100_000_000) {
+    return { ok: false, status: 400, code: "BAD_CUSTOM", message: "Custom amount must be zero or more." };
+  }
+  const customLabel =
+    typeof input.customLabel === "string" ? input.customLabel.trim().slice(0, 100) : "";
   const dueDate = typeof input.dueDate === "string" ? input.dueDate.trim() : "";
   if (!DATE_RE.exec(dueDate)) {
     return { ok: false, status: 400, code: "BAD_DUE_DATE", message: "Due date must be YYYY-MM-DD." };
   }
   const notes = typeof input.notes === "string" ? input.notes.trim().slice(0, 500) : "";
-  return { ok: true, value: { organizationId, year: period.year, month: period.month, sharePct, dueDate, notes } };
+  return {
+    ok: true,
+    value: { organizationId, year: period.year, month: period.month, sharePct, pppoeRateUsd, fxRate, customAmount, customLabel, dueDate, notes },
+  };
 }
 
 /** Platform fee = base collections x share %, rounded to 2dp. */
@@ -115,8 +160,14 @@ export interface InvoiceSmsInput {
   invoiceNumber: string;
   year: number;
   month: number;
-  baseAmount: number;
-  sharePct: number;
+  hotspotBase: number;
+  hotspotPct: number;
+  hotspotAmount: number;
+  pppoeUsers: number;
+  pppoeRateUsd: number;
+  pppoeAmount: number;
+  customAmount: number;
+  customLabel: string;
   totalAmount: number;
   dueDate: string;
   currency: string;
@@ -128,12 +179,41 @@ export function money(n: number, currency: string): string {
   return cur === "KES" ? `KSh ${formatted}` : `${formatted} ${cur}`;
 }
 
-/** <=160 chars keeps it to a single SMS segment. */
+function trimNum(n: number): string {
+  return String(Math.round(n * 10000) / 10000);
+}
+
+/** Compact money for SMS (no decimals when whole). */
+function shortMoney(n: number, currency: string): string {
+  const cur = (currency || "KES").toUpperCase();
+  const v = Math.round(n * 100) / 100;
+  const formatted = Number.isInteger(v)
+    ? v.toLocaleString("en-KE")
+    : v.toLocaleString("en-KE", { maximumFractionDigits: 2 });
+  return cur === "KES" ? formatted : `${formatted} ${cur}`;
+}
+
+/**
+ * Itemized fee SMS. Zero lines are omitted so the common cases fit one
+ * 160-char segment (custom label omitted for space — amount only).
+ */
 export function buildInvoiceSms(i: InvoiceSmsInput): string {
+  const parts: string[] = [];
+  if (i.hotspotAmount > 0) {
+    parts.push(
+      `Hotspot ${i.hotspotPct}%x${shortMoney(i.hotspotBase, i.currency)}=${shortMoney(i.hotspotAmount, i.currency)}`
+    );
+  }
+  if (i.pppoeAmount > 0) {
+    parts.push(`PPPoE ${i.pppoeUsers}x$${trimNum(i.pppoeRateUsd)}=${shortMoney(i.pppoeAmount, i.currency)}`);
+  }
+  if (i.customAmount > 0) {
+    parts.push(`Adj ${shortMoney(i.customAmount, i.currency)}`);
+  }
+  const lines = parts.length > 0 ? parts.join(" + ") : "No chargeable usage";
   return (
-    `${i.ispName}: QC NetCore platform fee ${periodLabel(i.year, i.month)}: ` +
-    `${money(i.baseAmount, i.currency)} collected x ${i.sharePct}% = ${money(i.totalAmount, i.currency)}. ` +
-    `Inv ${i.invoiceNumber}, due ${i.dueDate}.`
+    `${i.ispName} ${periodLabel(i.year, i.month)}: ${lines}. ` +
+    `Total ${shortMoney(i.totalAmount, i.currency)} Inv${i.invoiceNumber} due${i.dueDate}`
   );
 }
 
@@ -142,4 +222,115 @@ export function statusAfterPayment(total: number, paidTotal: number): IspInvoice
   if (paidTotal <= 0) return "SENT";
   if (paidTotal + 0.005 >= total) return "PAID";
   return "PARTIALLY_PAID";
+}
+
+export interface AttributablePayment {
+  customer_id: string | null;
+  amount: number;
+}
+
+export interface AttributableSubscription {
+  customer_id: string;
+  plan_id: string;
+  status: string;
+  start_time: string;
+  end_time: string;
+}
+
+/** ISO-8601 UTC strings compare chronologically — overlap without parsing. */
+export function windowsOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+  return aStart < bEnd && aEnd > bStart;
+}
+
+/**
+ * Hotspot revenue for the month: COMPLETED payments whose customer held an
+ * overlapping HOTSPOT subscription (hotspot checked first when a customer
+ * holds both), PLUS redeemed voucher face value (prepaid hotspot sales
+ * rarely pass through `payments` yet).
+ */
+export function attributeHotspotPayments(
+  payments: AttributablePayment[],
+  subscriptions: AttributableSubscription[],
+  hotspotPlanIds: Set<string>,
+  winStart: string,
+  winEnd: string
+): number {
+  const hotspotCustomers = new Set<string>();
+  for (const s of subscriptions) {
+    if (!hotspotPlanIds.has(s.plan_id)) continue;
+    if (!windowsOverlap(s.start_time, s.end_time, winStart, winEnd)) continue;
+    hotspotCustomers.add(s.customer_id);
+  }
+  let sum = 0;
+  for (const p of payments) {
+    if (!p.customer_id || !hotspotCustomers.has(p.customer_id)) continue;
+    sum += Number(p.amount) || 0;
+  }
+  return Math.round(sum * 100) / 100;
+}
+
+export interface RedeemedVoucher {
+  plan_id: string;
+  first_activated_at: string;
+}
+
+/** Face value of vouchers redeemed in the window (plan price at issue time). */
+export function voucherFaceValue(
+  vouchers: RedeemedVoucher[],
+  planPrices: Map<string, number>,
+  winStart: string,
+  winEnd: string
+): number {
+  let sum = 0;
+  for (const v of vouchers) {
+    if (v.first_activated_at < winStart || v.first_activated_at >= winEnd) continue;
+    sum += planPrices.get(v.plan_id) ?? 0;
+  }
+  return Math.round(sum * 100) / 100;
+}
+
+/**
+ * Billable PPPoE users: distinct customers with an ACTIVE/GRACE subscription
+ * on a PPPoE plan overlapping the month.
+ */
+export function countPppoeUsers(
+  subscriptions: AttributableSubscription[],
+  pppoePlanIds: Set<string>,
+  winStart: string,
+  winEnd: string
+): number {
+  const users = new Set<string>();
+  for (const s of subscriptions) {
+    if (!pppoePlanIds.has(s.plan_id)) continue;
+    if (s.status !== "ACTIVE" && s.status !== "GRACE") continue;
+    if (!windowsOverlap(s.start_time, s.end_time, winStart, winEnd)) continue;
+    users.add(s.customer_id);
+  }
+  return users.size;
+}
+
+export interface InvoiceTotalsInput {
+  hotspotBase: number;
+  hotspotPct: number;
+  pppoeUsers: number;
+  pppoeRateUsd: number;
+  fxRate: number;
+  customAmount: number;
+}
+
+export interface InvoiceTotals {
+  hotspotAmount: number;
+  pppoeAmount: number;
+  customAmount: number;
+  total: number;
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Line amounts + grand total, all rounded to cents. */
+export function computeInvoiceTotals(t: InvoiceTotalsInput): InvoiceTotals {
+  const hotspotAmount = computeShareAmount(t.hotspotBase, t.hotspotPct);
+  const pppoeAmount = round2(t.pppoeUsers * t.pppoeRateUsd * t.fxRate);
+  const customAmount = round2(Math.max(0, t.customAmount || 0));
+  return { hotspotAmount, pppoeAmount, customAmount, total: round2(hotspotAmount + pppoeAmount + customAmount) };
 }

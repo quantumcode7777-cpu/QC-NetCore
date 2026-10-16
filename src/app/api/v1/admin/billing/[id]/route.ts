@@ -6,6 +6,7 @@ import {
 } from "@/lib/captive/server";
 import {
   buildInvoiceSms,
+  computeInvoiceTotals,
   normalizePhoneKE,
   statusAfterPayment,
 } from "@/lib/admin/isp-billing";
@@ -16,7 +17,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 const FULL_COLUMNS =
-  "id, organization_id, invoice_number, period_year, period_month, share_pct, base_amount, total_amount, amount_paid, balance_due, status, due_date, notes, payment_reference, sent_at, sent_to, paid_at, created_at";
+  "id, organization_id, invoice_number, period_year, period_month, share_pct, base_amount, total_amount, amount_paid, balance_due, status, due_date, notes, payment_reference, sent_at, sent_to, paid_at, created_at, hotspot_payments, voucher_face_value, pppoe_users, pppoe_rate_usd, fx_rate, custom_amount, custom_label";
 
 interface InvoiceRow {
   id: string;
@@ -32,6 +33,13 @@ interface InvoiceRow {
   status: string;
   due_date: string;
   notes: string | null;
+  hotspot_payments: number;
+  voucher_face_value: number;
+  pppoe_users: number;
+  pppoe_rate_usd: number;
+  fx_rate: number;
+  custom_amount: number;
+  custom_label: string | null;
 }
 
 async function loadInvoice(db: AnyClient, id: string): Promise<InvoiceRow | null> {
@@ -72,13 +80,27 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       return jsonError(400, "BAD_ISP_PHONE", `The ISP's contact phone (${o.phone || "missing"}) is not a valid Kenyan number. Fix it in ISP Management first.`);
     }
 
+    const lines = computeInvoiceTotals({
+      hotspotBase: Number(inv.base_amount),
+      hotspotPct: Number(inv.share_pct),
+      pppoeUsers: Number(inv.pppoe_users),
+      pppoeRateUsd: Number(inv.pppoe_rate_usd),
+      fxRate: Number(inv.fx_rate),
+      customAmount: Number(inv.custom_amount),
+    });
     const sms = buildInvoiceSms({
       ispName: o.name,
       invoiceNumber: inv.invoice_number,
       year: Number(inv.period_year),
       month: Number(inv.period_month),
-      baseAmount: Number(inv.base_amount),
-      sharePct: Number(inv.share_pct),
+      hotspotBase: Number(inv.base_amount),
+      hotspotPct: Number(inv.share_pct),
+      hotspotAmount: lines.hotspotAmount,
+      pppoeUsers: Number(inv.pppoe_users),
+      pppoeRateUsd: Number(inv.pppoe_rate_usd),
+      pppoeAmount: lines.pppoeAmount,
+      customAmount: Number(inv.custom_amount),
+      customLabel: inv.custom_label ?? "",
       totalAmount: Number(inv.total_amount),
       dueDate: String(inv.due_date),
       currency: o.currency ?? "KES",
