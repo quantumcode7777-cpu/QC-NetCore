@@ -4,7 +4,7 @@ import {
   jsonError,
   type AnyClient,
 } from "@/lib/captive/server";
-import { aggregateIspStats, validateUpdateOrg } from "@/lib/admin/isps";
+import { aggregateIspStats, emptyStats, validateUpdateOrg } from "@/lib/admin/isps";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +39,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 
     const [
       { data: routers },
+      { data: customers },
       { data: plans },
       { data: profiles },
       { data: vouchers },
@@ -47,58 +48,48 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     ] = await Promise.all([
       db
         .from("routers")
-        .select("id, name, management_ip, status, last_seen_at")
+        .select("id, name, management_ip, status, last_seen_at, organization_id")
         .eq("organization_id", id)
         .order("name", { ascending: true }),
+      db.from("customers").select("organization_id").eq("organization_id", id),
       db
         .from("plans")
-        .select("id, name, service_type, price, is_active")
+        .select("id, name, service_type, price, is_active, organization_id")
         .eq("organization_id", id)
         .order("price", { ascending: true }),
       db
         .from("profiles")
-        .select("id, full_name, role, is_active, created_at")
+        .select("id, full_name, role, is_active, created_at, organization_id")
         .eq("organization_id", id)
         .order("created_at", { ascending: true }),
       db
         .from("hotspot_vouchers")
-        .select("status")
+        .select("organization_id, status")
         .eq("organization_id", id),
       db
         .from("captive_portal_configs")
-        .select("id, status, version, updated_at")
+        .select("id, status, version, updated_at, organization_id")
         .eq("organization_id", id)
         .order("updated_at", { ascending: false }),
       db
         .from("payments")
-        .select("id, amount, status, created_at")
+        .select("id, amount, status, created_at, organization_id")
         .eq("organization_id", id)
         .order("created_at", { ascending: false })
         .limit(10),
     ]);
 
+    // Every row is already org-filtered, so pass them straight through —
+    // no lossy re-casts (the client infers select shapes).
     const stats = aggregateIspStats({
-      routers: ((routers ?? []) as Array<{ organization_id: string }>).map(() => ({ organization_id: id })),
-      customers: [],
-      plans: ((plans ?? []) as Array<{ organization_id: string; service_type: string }>).map((p) => ({
-        organization_id: id,
-        service_type: String(p.service_type),
-      })),
-      vouchers: ((vouchers ?? []) as Array<{ status: string }>).map((v) => ({
-        organization_id: id,
-        status: String(v.status),
-      })),
-      profiles: ((profiles ?? []) as Array<unknown>).map(() => ({ organization_id: id })),
-      payments: ((payments ?? []) as Array<{ amount: number; status: string }>).map((p) => ({
-        organization_id: id,
-        amount: Number(p.amount),
-        status: String(p.status),
-      })),
-      portalConfigs: ((portalConfigs ?? []) as Array<{ status: string }>).map((c) => ({
-        organization_id: id,
-        status: String(c.status),
-      })),
-    })[id];
+      routers: (routers ?? []) as Array<{ organization_id: string }>,
+      customers: (customers ?? []) as Array<{ organization_id: string }>,
+      plans: (plans ?? []) as Array<{ organization_id: string; service_type: string }>,
+      vouchers: (vouchers ?? []) as Array<{ organization_id: string; status: string }>,
+      profiles: (profiles ?? []) as Array<{ organization_id: string }>,
+      payments: (payments ?? []) as Array<{ organization_id: string; amount: number; status: string }>,
+      portalConfigs: (portalConfigs ?? []) as Array<{ organization_id: string; status: string }>,
+    })[id] ?? emptyStats();
 
     return NextResponse.json({
       success: true,
