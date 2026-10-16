@@ -7,7 +7,7 @@ import { ChevronLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-context";
 import { QCNetCoreLogo } from "@/components/ui/GTechLogo";
-import { ALL_NAV_ITEMS } from "./nav";
+import { visibleNavItems } from "./nav";
 
 const SIDEBAR_STORAGE_KEY = "qc_netcore_sidebar_collapsed";
 
@@ -19,7 +19,7 @@ export function Sidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
-  const { signOut } = useAuth();
+  const { signOut, profile, isDemoMode } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -118,7 +118,7 @@ export function Sidebar({
         )}
       >
         <ul className="space-y-1">
-          {ALL_NAV_ITEMS.map((item) => {
+          {visibleNavItems(profile?.role, isDemoMode).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (

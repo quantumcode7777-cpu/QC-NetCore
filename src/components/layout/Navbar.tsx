@@ -16,7 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Sidebar } from "./Sidebar";
-import { ALL_NAV_ITEMS } from "./nav";
+import { visibleNavItems } from "./nav";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { cn } from "@/lib/utils";
@@ -56,17 +56,19 @@ function getInitials(name: string): string {
  */
 function QuickJumpPalette() {
   const router = useRouter();
+  const { profile, isDemoMode } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const items = visibleNavItems(profile?.role, isDemoMode);
   const q = query.trim().toLowerCase();
   const results = q
-    ? ALL_NAV_ITEMS.filter((i) =>
+    ? items.filter((i) =>
         `${i.label} ${i.keywords ?? ""}`.toLowerCase().includes(q)
       ).slice(0, 8)
-    : ALL_NAV_ITEMS.slice(0, 8);
+    : items.slice(0, 8);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Wifi,
@@ -224,7 +225,16 @@ function Panel({
 // ---------- page ----------
 
 export default function DashboardPage() {
-  const { isDemoMode, isLoading: authLoading, organization, user } = useAuth();
+  const { isDemoMode, isLoading: authLoading, organization, user, profile } = useAuth();
+  const router = useRouter();
+
+  // SaaS owners land on ISP Management — the org dashboard would only ever
+  // show the (empty) platform org.
+  useEffect(() => {
+    if (!authLoading && !isDemoMode && profile?.role === "super_admin") {
+      router.replace("/admin/isps");
+    }
+  }, [authLoading, isDemoMode, profile?.role, router]);
 
   const [stats, setStats] = useState<NOCStats | null>(null);
   const [routers, setRouters] = useState<Router[]>([]);

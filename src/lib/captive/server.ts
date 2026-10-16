@@ -55,6 +55,42 @@ export type AdminAuth =
   | { ok: false; response: NextResponse };
 
 /**
+ * SaaS-owner gate: role must be exactly `super_admin`. Unlike portal admin
+ * auth, no organization is derived — callers operate across ALL tenants.
+ */
+export async function authorizeSuperAdmin(): Promise<
+  | { ok: true; ctx: { supabase: AnyClient; userId: string; userEmail: string | null } }
+  | { ok: false; response: NextResponse }
+> {
+  if (!SUPABASE_READY) {
+    return { ok: false, response: jsonError(503, "BACKEND_UNAVAILABLE", "The backend is unavailable right now. Please try again later.") };
+  }
+  try {
+    const { createSupabaseServerClient } = await import("@/lib/supabase/server");
+    const supabase = (await createSupabaseServerClient()) as unknown as AnyClient;
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+      return { ok: false, response: jsonError(401, "AUTH_EXPIRED", "Your session has expired. Please sign in again.") };
+    }
+    const { data: profile, error: pErr } = await supabase
+      .from("profiles")
+      .select("id, role, is_active")
+      .eq("id", user.id)
+      .single();
+    if (pErr || !profile || !profile.is_active) {
+      return { ok: false, response: jsonError(403, "PERMISSION_DENIED", "You don't have permission to perform this action.") };
+    }
+    if (profile.role !== "super_admin") {
+      return { ok: false, response: jsonError(403, "PERMISSION_DENIED", "Only the SaaS owner can manage ISPs.") };
+    }
+    return { ok: true, ctx: { supabase, userId: user.id, userEmail: user.email ?? null } };
+  } catch (err) {
+    console.error("[Admin] authorize failed:", err);
+    return { ok: false, response: jsonError(500, "SERVER_ERROR", "Something went wrong. Please try again.") };
+  }
+}
+
+/**
  * Resolves the caller's tenant strictly from their session + profile row.
  * Any organization id supplied by the client is ignored by design.
  */

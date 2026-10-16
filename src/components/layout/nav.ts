@@ -12,6 +12,7 @@ import {
   Settings,
   Paintbrush,
   MessageSquare,
+  Building2,
 } from "lucide-react";
 
 /**
@@ -24,6 +25,8 @@ export interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   /** Extra search terms for quick-jump */
   keywords?: string;
+  /** When set, only these roles (or demo mode) may see the entry. */
+  roles?: string[];
 }
 export interface NavGroup {
   id: string;
@@ -75,11 +78,26 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "admin",
     label: "Administration",
-    items: [{ href: "/settings", label: "Settings", icon: Settings, keywords: "configuration organization" }],
+    items: [
+      { href: "/settings", label: "Settings", icon: Settings, keywords: "configuration organization" },
+      {
+        href: "/admin/isps",
+        label: "ISP Management",
+        icon: Building2,
+        keywords: "saas owner tenants isps onboard suspend platform",
+        roles: ["super_admin"],
+      },
+    ],
   },
 ];
 
 export const ALL_NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
+/** Role-filtered nav (demo mode sees everything, like today). */
+export function visibleNavItems(role?: string | null, isDemoMode?: boolean): NavItem[] {
+  if (isDemoMode) return ALL_NAV_ITEMS;
+  return ALL_NAV_ITEMS.filter((i) => !i.roles || (role != null && i.roles.includes(role)));
+}
 
 /** Bottom bar on phones: the four things operators reach for most. */
 export const PRIMARY_MOBILE_ITEMS: NavItem[] = [
