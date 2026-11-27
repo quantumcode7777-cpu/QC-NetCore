@@ -358,3 +358,38 @@ no tunnel/poller needed):
 - Demo mode uses new seed sites, routers, APs, topology nodes, and GIS nodes.
 - Tests: `tests/sites-network-map.test.mjs` (5 cases). `npm test` = 118 pass
   + 1 skip; `tsc --noEmit` clean; `npm run build` verified.
+
+## 21. Payment Gateway — real Daraja + reconciliation inbox (Nov 27)
+
+- Backlog item #11 from the REA gap report. Replaced the simulated live STK
+  path with real server-side Daraja OAuth/HTTPS calls. Demo/preview still uses
+  an explicitly named `simulateSTKPush()` and never contacts Safaricom.
+- New migration `026_payment_gateways.sql`: per-organization encrypted Daraja
+  credential table (consumer key/secret, passkey, shortcode, callback URLs,
+  C2B registration timestamp) plus `payments.provider_receipt`. RLS uses the
+  existing `auth_org_id()` tenant policy. User must apply it in Supabase.
+- `src/lib/payments/daraja.ts` builds OAuth Basic auth, SHA-256 STK passwords,
+  STK payloads, C2B registration bodies, and parses responses with injectable
+  `fetch`. Errors never invent a success receipt.
+- `POST /api/v1/mpesa-stk-push` resolves the org from either the signed-in
+  session or a public captive portal `org` slug, loads org credentials (or a
+  clearly labelled platform env fallback), calls Daraja, and records an
+  `INITIATED` payment keyed by CheckoutRequestID.
+- `/api/v1/mpesa-callback` confirms that exact row by CheckoutRequestID,
+  stores the real provider receipt, and links a subscriber only when the pure
+  reconciliation helper finds one. `/api/v1/mpesa-c2b/validation` and
+  `/confirmation` register with Daraja and record Paybill/Till collections.
+  An optional shared token guards callback URLs.
+- `GET|PATCH /api/v1/payment-gateway` gives ISP owners encrypted per-ISP
+  credential storage; secrets are masked in every response.
+  `POST /api/v1/payment-gateway/c2b/register` performs real URL registration.
+- `GET|PATCH /api/v1/payment-gateway/unmatched` is a manual inbox for confirmed
+  collections with no invoice. Suggestions come from existing pure matchers;
+  allocation is explicit and updates the invoice only after the operator acts.
+  Bank statement/PSP import remains deliberately pending until details arrive.
+- New `/payment-gateway` page and Billing nav entry show configuration status,
+  callback URLs, C2B registration, and the unmatched queue with honest empty
+  states. Live portal/self-care payment flows now wait for the Daraja callback
+  instead of fabricating an activated session.
+- Tests: `tests/payment-gateway.test.mjs` (10 cases). `npm test` = 128 pass
+  + 1 skip; `tsc --noEmit` clean; `npm run build` clean.

@@ -17,7 +17,7 @@ export async function getOrgClient() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("organization_id")
+    .select("organization_id, role")
     .eq("id", user.id)
     .maybeSingle();
   const orgId = profile?.organization_id ? String(profile.organization_id) : null;
@@ -33,5 +33,6 @@ export async function getOrgClient() {
     supabase: supabase as unknown as AnyClient,
     orgId,
     userId: user.id,
+    role: profile?.role ? String(profile.role) : null,
   };
 }

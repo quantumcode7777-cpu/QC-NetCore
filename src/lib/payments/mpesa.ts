@@ -66,15 +66,15 @@ export class MpesaService {
   }
 
   /**
-   * Initiates Lipa Na M-Pesa Online (STK Push)
+   * Demo-only STK simulation. Live accounts must use the server-side Daraja
+   * route at POST /api/v1/mpesa-stk-push; this method never contacts Safaricom.
    */
-  static async initiateSTKPush(request: STKPushRequest): Promise<STKPushResponse> {
+  static async simulateSTKPush(request: STKPushRequest): Promise<STKPushResponse> {
     const formattedPhone = this.formatPhoneNumber(request.phoneNumber);
     const checkoutId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
     const merchantId = `MCH_${Math.floor(Math.random() * 1000000)}`;
 
-    // In a live environment with Daraja keys, makes an HTTPS POST to Daraja endpoint.
-    // Here we provide instant execution with realistic response contract.
+    // Demo-only: no network call, no real charge, no ledger row.
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     return {

@@ -705,6 +705,7 @@ export interface Database {
           amount: number
           currency: string
           transaction_reference: string
+          provider_receipt: string | null
           msisdn_phone: string
           sender_name: string | null
           status: 'INITIATED' | 'PENDING' | 'COMPLETED' | 'FAILED' | 'REVERSED'
@@ -721,6 +722,7 @@ export interface Database {
           amount: number
           currency?: string
           transaction_reference: string
+          provider_receipt?: string | null
           msisdn_phone: string
           sender_name?: string | null
           status?: 'INITIATED' | 'PENDING' | 'COMPLETED' | 'FAILED' | 'REVERSED'
@@ -732,6 +734,10 @@ export interface Database {
           customer_id?: string | null
           invoice_id?: string | null
           status?: 'INITIATED' | 'PENDING' | 'COMPLETED' | 'FAILED' | 'REVERSED'
+          amount?: number
+          msisdn_phone?: string
+          sender_name?: string | null
+          provider_receipt?: string | null
           raw_payload?: Json | null
           processed_at?: string | null
         }
@@ -739,6 +745,64 @@ export interface Database {
           { foreignKeyName: 'payments_organization_id_fkey'; columns: ['organization_id']; referencedRelation: 'organizations'; referencedColumns: ['id'] },
           { foreignKeyName: 'payments_customer_id_fkey'; columns: ['customer_id']; referencedRelation: 'customers'; referencedColumns: ['id'] },
           { foreignKeyName: 'payments_invoice_id_fkey'; columns: ['invoice_id']; referencedRelation: 'invoices'; referencedColumns: ['id'] }
+        ]
+      }
+      payment_gateways: {
+        Row: {
+          id: string
+          organization_id: string
+          provider: 'MPESA_DARAJA'
+          environment: 'sandbox' | 'production'
+          shortcode: string
+          passkey_encrypted: string | null
+          consumer_key_encrypted: string | null
+          consumer_secret_encrypted: string | null
+          callback_url: string
+          confirmation_url: string
+          validation_url: string
+          is_enabled: boolean
+          c2b_registered_at: string | null
+          last_tested_at: string | null
+          last_error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          provider?: 'MPESA_DARAJA'
+          environment?: 'sandbox' | 'production'
+          shortcode: string
+          passkey_encrypted?: string | null
+          consumer_key_encrypted?: string | null
+          consumer_secret_encrypted?: string | null
+          callback_url: string
+          confirmation_url: string
+          validation_url: string
+          is_enabled?: boolean
+          c2b_registered_at?: string | null
+          last_tested_at?: string | null
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          environment?: 'sandbox' | 'production'
+          shortcode?: string
+          passkey_encrypted?: string | null
+          consumer_key_encrypted?: string | null
+          consumer_secret_encrypted?: string | null
+          callback_url?: string
+          confirmation_url?: string
+          validation_url?: string
+          is_enabled?: boolean
+          c2b_registered_at?: string | null
+          last_tested_at?: string | null
+          last_error?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: 'payment_gateways_organization_id_fkey'; columns: ['organization_id']; referencedRelation: 'organizations'; referencedColumns: ['id'] }
         ]
       }
       work_orders: {
@@ -914,6 +978,7 @@ export type SiteRow = Tables<'sites'>
 export type AccessPointRow = Tables<'access_points'>
 export type TopologyNodeRow = Tables<'topology_nodes'>
 export type GisFiberNodeRow = Tables<'gis_fiber_nodes'>
+export type PaymentGatewayRow = Tables<'payment_gateways'>
 export type RouterRow = Tables<'routers'>
 export type PlanRow = Tables<'plans'>
 export type CustomerRow = Tables<'customers'>

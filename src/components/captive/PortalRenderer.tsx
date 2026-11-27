@@ -271,19 +271,28 @@ export function PortalRenderer({
     }
 
     try {
-      const { MpesaService } = await import("@/lib/payments/mpesa");
-      const res = await MpesaService.initiateSTKPush({
-        phoneNumber: phone,
-        amount: selected.price,
-        accountReference: `HS-${selected.name.substring(0, 4)}`,
-        transactionDesc: `Hotspot ${selected.name}`,
+      // Live payments always go through the server: credentials stay server-side
+      // and access is only granted when Daraja confirms the payment by callback.
+      const response = await fetch("/api/v1/mpesa-stk-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          org: orgSlug,
+          phoneNumber: phone,
+          amount: selected.price,
+          accountReference: `HS-${selected.name.substring(0, 4)}`,
+          transactionDesc: `Hotspot ${selected.name}`,
+        }),
       });
-      if (res.success) {
-        setTimeout(() => {
-          completeActivation(res.checkoutRequestId?.slice(-8).toUpperCase() || "QCN849201");
-        }, 1600);
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.success) {
+        setStatus({
+          kind: "info",
+          text: "STK prompt sent. Complete it on your phone; access opens automatically after M-Pesa confirmation.",
+        });
+        setBusy(false);
       } else {
-        setStatus({ kind: "error", text: msgs.paymentFailed });
+        setStatus({ kind: "error", text: data?.error || msgs.paymentFailed });
         setBusy(false);
       }
     } catch {

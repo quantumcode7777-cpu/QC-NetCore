@@ -264,7 +264,8 @@ export interface Payment {
   paymentMethod: PaymentMethod;
   amount: number;
   currency: string;
-  transactionReference: string; // e.g. "RKF9283KDJ"
+  transactionReference: string; // e.g. "RKF9283KDJ" or an STK CheckoutRequestID
+  providerReceipt?: string;
   msisdnPhone: string;
   senderName?: string;
   status: PaymentStatus;

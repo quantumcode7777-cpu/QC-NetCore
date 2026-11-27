@@ -85,18 +85,43 @@ export default function CustomerPortalPage() {
     setIsRenewing(true);
     setRenewStatus("Sending STK Push prompt to your M-Pesa phone...");
 
-    const res = await MpesaService.initiateSTKPush({
-      phoneNumber: phone,
-      amount: plan.price,
-      accountReference: customer.accountNumber,
-      transactionDesc: `Renew ${plan.name}`,
-    });
+    try {
+      if (isDemoMode) {
+        const res = await MpesaService.simulateSTKPush({
+          phoneNumber: phone,
+          amount: plan.price,
+          accountReference: customer.accountNumber,
+          transactionDesc: `Renew ${plan.name}`,
+        });
+        if (res.success) {
+          setTimeout(() => {
+            setRenewStatus("Demo payment verified. No real charge was made.");
+            setIsRenewing(false);
+          }, 1800);
+        }
+        return;
+      }
 
-    if (res.success) {
-      setTimeout(() => {
-        setRenewStatus("Payment verified! Subscription extended by 30 days. Internet access active.");
-        setIsRenewing(false);
-      }, 1800);
+      const response = await fetch("/api/v1/mpesa-stk-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: phone,
+          amount: plan.price,
+          accountReference: customer.accountNumber,
+          transactionDesc: `Renew ${plan.name}`,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      setRenewStatus(
+        response.ok && data?.success
+          ? "STK prompt sent. Complete it on your phone; the subscription updates after M-Pesa confirms payment."
+          : data?.error || "The payment request could not be sent. No charge was made."
+      );
+    } catch {
+      setRenewStatus("The payment request could not be sent. No charge was made.");
+    } finally {
+      if (!isDemoMode) setIsRenewing(false);
     }
   };
 

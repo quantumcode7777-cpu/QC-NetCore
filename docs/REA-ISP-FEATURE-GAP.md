@@ -132,7 +132,7 @@ Not present in source (searched `src/**/*.ts(x)`):
 | 8 | **Network map + sites/AP inventory** | Savcon Network Map, Sites, Access Points | Partial — Sites + map slice implemented; AP table migration pending | P2 | DONE: org-scoped sites CRUD, `/sites` POP cards with router/subscriber/AP counts, `/network-map` SVG topology from `sites`/`routers`/`topology_nodes`/`gis_fiber_nodes`, honest empty states. REMAINING: production apply of migration 025, richer AP provisioning via TR-069. |
 | 9 | **Roaming users / TV & MAC bindings / bundle customization / loyalty** | Savcon hotspot nav | Absent | P2 | Add as hotspot sub-resources after #3; low cost once subscriber model is stable. |
 | 10 | **Voucher agents + import/recycle bin** | Savcon vouchers/agents, Data nav | Batch API exists, no agent channel | P2 | Agent assignment, commission view, CSV import, soft-delete restore. |
-| 11 | **Payment Gateway page (till/paybill reconciliation)** | Savcon Payment Gateway; Tabana MPESA | STK/callback only | P2 | Till/paybill reconciliation queue and unmatched-payment inbox; needs Daraja credentials (#blocked). |
+| 11 | **Payment Gateway page (till/paybill reconciliation)** | Savcon Payment Gateway; Tabana MPESA | Partial — real Daraja + gateway page + unmatched inbox implemented; credentials/bank details pending | P2 | DONE: real OAuth/STK/C2B registration and callbacks, encrypted per-ISP gateway config, unmatched-payment inbox with explicit manual allocation. REMAINING: live Daraja credentials, C2B registration in production, bank statement/PSP import after provider details are supplied. |
 | 12 | **Staff / role management** | Savcon Staff | Basic profiles only | P2 | ISP-scoped staff roles with owner audit trail. |
 
 Suggested delivery order: **2 (partial, shipped) → 1 → 3 → 4**, then re-run REA on authenticated Tabana to refine 5–12 before committing effort.
@@ -214,3 +214,32 @@ What is real now:
 Verification: `tests/sites-network-map.test.mjs` (5 cases),
 `npm test` = 118 pass + 1 skip, `tsc --noEmit` clean,
 `npm run build` clean including both new pages and API routes.
+
+## 10. Implemented slice — payment gateway (2026-11-27)
+
+Backlog item #11 was implemented after Sites + Network Map.
+
+What is real now:
+- Live STK Push uses Daraja OAuth over HTTPS through
+  `src/lib/payments/daraja.ts`; demo/preview still uses an explicitly named
+  simulation. No fake receipt or fake activation is generated for live users.
+- `payment_gateways` stores per-ISP Daraja secrets as AES-256-GCM ciphertext.
+  The browser only receives `••••••••` for saved secrets. Migration 026 also
+  adds `payments.provider_receipt` so a confirmed callback can keep both the
+  CheckoutRequestID (idempotency key) and the M-Pesa receipt.
+- C2B validation/confirmation endpoints and real Daraja URL registration are
+  wired. An optional webhook token can be appended to registered URLs.
+- `/payment-gateway` exposes gateway setup, status, callback endpoints, C2B
+  registration, and an unmatched-payments inbox. Suggestions come from the
+  pure reconciliation engine; posting to an invoice requires explicit operator
+  action.
+
+Honest limits:
+- Production needs real Daraja keys, public HTTPS callback URLs, and one C2B
+  registration per paybill/till. Until then the UI reports platform fallback
+  or not configured; it does not pretend collections are live.
+- Bank statement and bank/PSP API reconciliation is still pending. No bank
+  format or credentials have been supplied, so no bank rows are invented.
+
+Verification: `tests/payment-gateway.test.mjs` (10 cases),
+`npm test` = 128 pass + 1 skip, `tsc --noEmit` clean, `npm run build` clean.

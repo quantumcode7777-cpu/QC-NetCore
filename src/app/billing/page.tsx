@@ -129,7 +129,7 @@ export default function BillingPage() {
 
     // Demo dataset keeps the original local simulation.
     if (isDemoMode) {
-      const res = await MpesaService.initiateSTKPush({
+      const res = await MpesaService.simulateSTKPush({
         phoneNumber: phone,
         amount,
         accountReference: accRef,

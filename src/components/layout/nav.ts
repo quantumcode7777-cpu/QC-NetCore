@@ -16,6 +16,7 @@ import {
   Receipt,
   MapPin,
   Network,
+  Wallet,
 } from "lucide-react";
 
 /**
@@ -78,6 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/plans", label: "Packages", icon: Layers, keywords: "plans service speed price", ...HIDE_FROM_OWNER },
       { href: "/billing", label: "Payments", icon: CreditCard, keywords: "billing mpesa invoices transactions", ...HIDE_FROM_OWNER },
+      { href: "/payment-gateway", label: "Payment Gateway", icon: Wallet, keywords: "daraja mpesa paybill c2b stk credentials reconciliation", ...HIDE_FROM_OWNER },
     ],
   },
   {

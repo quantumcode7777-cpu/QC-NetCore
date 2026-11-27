@@ -169,6 +169,80 @@ export class PaymentsService {
     }
   }
 
+  /** Persists an accepted STK request so callbacks can be correlated safely. */
+  static async recordInitiatedPayment(payload: {
+    organizationId: string;
+    amount: number;
+    checkoutRequestId: string;
+    msisdnPhone: string;
+    rawPayload: unknown;
+    customerId?: string;
+    invoiceId?: string;
+  }): Promise<ServiceResult<Payment>> {
+    if (!SUPABASE_READY) {
+      return {
+        data: {
+          id: `pay-init-${Date.now()}`,
+          organizationId: payload.organizationId,
+          customerId: payload.customerId,
+          invoiceId: payload.invoiceId,
+          paymentMethod: "MPESA_EXPRESS",
+          amount: payload.amount,
+          currency: "KES",
+          transactionReference: payload.checkoutRequestId,
+          msisdnPhone: payload.msisdnPhone,
+          status: "INITIATED",
+          createdAt: new Date().toISOString(),
+        },
+        error: null,
+      };
+    }
+
+    try {
+      const { createSupabaseServiceClient } = await import("@/lib/supabase/server");
+      const supabase = createSupabaseServiceClient();
+      const { data: existing } = await supabase
+        .from("payments")
+        .select()
+        .eq("transaction_reference", payload.checkoutRequestId)
+        .maybeSingle();
+      if (existing) return { data: mapPaymentRow(existing), error: null };
+
+      const { data, error } = await supabase
+        .from("payments")
+        .insert({
+          organization_id: payload.organizationId,
+          customer_id: payload.customerId ?? null,
+          invoice_id: payload.invoiceId ?? null,
+          payment_method: "MPESA_EXPRESS",
+          amount: payload.amount,
+          currency: "KES",
+          transaction_reference: payload.checkoutRequestId,
+          msisdn_phone: payload.msisdnPhone,
+          status: "INITIATED",
+          raw_payload: (payload.rawPayload as unknown) as import("@/types/database.types").Json,
+        })
+        .select()
+        .single();
+      if (error) {
+        if ((error as { code?: string }).code === "23505") {
+          const { data: duplicate } = await supabase
+            .from("payments")
+            .select()
+            .eq("transaction_reference", payload.checkoutRequestId)
+            .maybeSingle();
+          if (duplicate) return { data: mapPaymentRow(duplicate), error: null };
+        }
+        const appError = handleSupabaseError(error, "payments.initiate");
+        return { data: null, error: appError.userMessage };
+      }
+      return { data: mapPaymentRow(data), error: null };
+    } catch (err) {
+      const appError = handleSupabaseError(err, "payments.initiate");
+      return { data: null, error: appError.userMessage };
+    }
+  }
+
   static async recordMpesaPayment(payload: {
     organizationId: string;
     customerId?: string;
@@ -179,6 +253,8 @@ export class PaymentsService {
     senderName?: string;
     paymentMethod: Payment["paymentMethod"];
     rawPayload: unknown;
+    checkoutRequestId?: string;
+    providerReceipt?: string;
   }): Promise<ServiceResult<Payment>> {
     if (!SUPABASE_READY) {
       const mockPayment: Payment = {
@@ -203,6 +279,39 @@ export class PaymentsService {
       const { createSupabaseServiceClient } = await import("@/lib/supabase/server");
       const supabase = createSupabaseServiceClient();
 
+      // An STK request row already exists with the CheckoutRequestID as its
+      // unique reference. Confirm it in place so Daraja retries stay idempotent.
+      if (payload.checkoutRequestId) {
+        const { data: existing } = await supabase
+          .from("payments")
+          .select()
+          .eq("transaction_reference", payload.checkoutRequestId)
+          .maybeSingle();
+        if (existing) {
+          const { data: updated, error: updateError } = await supabase
+            .from("payments")
+            .update({
+              status: "COMPLETED",
+              provider_receipt: payload.providerReceipt ?? null,
+              customer_id: payload.customerId ?? (existing.customer_id as string | null) ?? null,
+              invoice_id: payload.invoiceId ?? (existing.invoice_id as string | null) ?? null,
+              amount: payload.amount,
+              msisdn_phone: payload.msisdnPhone,
+              sender_name: payload.senderName ?? null,
+              raw_payload: (payload.rawPayload as unknown) as import("@/types/database.types").Json,
+              processed_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id)
+            .select()
+            .single();
+          if (updateError) {
+            const appError = handleSupabaseError(updateError, "payments.confirm");
+            return { data: null, error: appError.userMessage };
+          }
+          return { data: mapPaymentRow(updated), error: null };
+        }
+      }
+
       const { data, error } = await supabase
         .from("payments")
         .insert({
@@ -213,6 +322,7 @@ export class PaymentsService {
           amount: payload.amount,
           currency: "KES",
           transaction_reference: payload.transactionReference,
+          provider_receipt: payload.providerReceipt ?? null,
           msisdn_phone: payload.msisdnPhone,
           sender_name: payload.senderName ?? null,
           status: "COMPLETED",
@@ -259,6 +369,7 @@ function mapPaymentRow(row: Record<string, unknown>): Payment {
     amount: Number(row.amount),
     currency: row.currency as string,
     transactionReference: row.transaction_reference as string,
+    providerReceipt: (row.provider_receipt as string | null) ?? undefined,
     msisdnPhone: row.msisdn_phone as string,
     senderName: row.sender_name as string | undefined,
     status: row.status as Payment["status"],
