@@ -20,6 +20,7 @@ import type {
   NetworkAlert,
   NOCStats,
 } from "../../types/index.ts";
+import type { AnalyticsRawData } from "../analytics.ts";
 
 export const SEED_ORGANIZATION: Organization = {
   id: "org-nexanet-01",
@@ -771,5 +772,65 @@ export function getSeedNOCStats(): NOCStats {
     revenueToday: 18450,
     revenueThisMonth: 342500,
     recentAlerts: SEED_ALERTS,
+  };
+}
+
+/** Demo rows for the analytics panels — no server-only data. */
+export function getSeedAnalyticsData(): AnalyticsRawData {
+  const n = (v: unknown) => {
+    const parsed = Number(v);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  return {
+    payments: SEED_PAYMENTS.map((p) => ({
+      id: p.id,
+      customerId: p.customerId ?? null,
+      customerName: p.customerName ?? null,
+      accountNumber: p.accountNumber ?? null,
+      amount: n(p.amount),
+      status: p.status,
+      createdAt: p.createdAt,
+      processedAt: p.processedAt ?? null,
+    })),
+    subscriptions: SEED_SUBSCRIPTIONS.map((s) => ({
+      customerId: s.customerId,
+      planId: s.planId,
+      status: s.status,
+      startTime: s.startTime,
+      endTime: s.endTime,
+    })),
+    plans: SEED_PLANS.map((p) => ({
+      id: p.id,
+      name: p.name,
+      serviceType: p.serviceType,
+      price: n(p.price),
+    })),
+    vouchers: SEED_HOTSPOT_VOUCHERS.filter((v) => Boolean(v.firstActivatedAt)).map((v) => ({
+      planId: v.planId,
+      firstActivatedAt: v.firstActivatedAt ?? null,
+    })),
+    pppoeAccounts: SEED_PPPOE.map((a) => ({
+      customerId: a.customerId,
+      routerId: a.routerId ?? null,
+      username: a.username,
+      isOnline: Boolean(a.isOnline),
+      bytesIn: n(a.bytesIn),
+      bytesOut: n(a.bytesOut),
+    })),
+    routers: SEED_ROUTERS.map((r) => ({
+      id: r.id,
+      name: r.name,
+      siteName: r.siteName ?? null,
+      status: r.status,
+    })),
+    customers: SEED_CUSTOMERS.map((c) => ({
+      id: c.id,
+      fullName: c.fullName,
+      accountNumber: c.accountNumber,
+      phoneNumber: c.phoneNumber,
+    })),
+    usageSnapshots: [],
+    activitySnapshots: [],
+    warnings: [],
   };
 }

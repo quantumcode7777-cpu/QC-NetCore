@@ -22,7 +22,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { getSeedNOCStats, SEED_PAYMENTS, SEED_ROUTERS } from "@/lib/db/mock-db";
+import { getSeedAnalyticsData, getSeedNOCStats, SEED_PAYMENTS, SEED_ROUTERS } from "@/lib/db/mock-db";
 import type { NOCStats, Router, Payment } from "@/types";
 import { cn, formatKES } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -30,6 +30,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PageHeader, btnClass } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
+import { AnalyticsOverview } from "@/components/dashboard/AnalyticsOverview";
+import type { AnalyticsRawData } from "@/lib/analytics";
 import {
   aggregateRevenueByDay,
   type DailyRevenueBucket,
@@ -240,6 +242,8 @@ export default function DashboardPage() {
   const [routers, setRouters] = useState<Router[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [serverRevenueBuckets, setServerRevenueBuckets] = useState<DailyRevenueBucket[] | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsRawData | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -253,21 +257,25 @@ export default function DashboardPage() {
       setRouters(SEED_ROUTERS);
       setPayments(SEED_PAYMENTS);
       setServerRevenueBuckets(null);
+      setAnalyticsData(getSeedAnalyticsData());
+      setAnalyticsError(null);
       setIsLoading(false);
       return;
     }
     try {
-      const [nocRes, routerRes, payRes, revRes] = await Promise.all([
+      const [nocRes, routerRes, payRes, revRes, analyticsRes] = await Promise.all([
         fetch("/api/v1/monitoring/noc"),
         fetch("/api/v1/mikrotik-fleet"),
         fetch("/api/v1/payments?limit=500"),
         fetch("/api/v1/payments/revenue?days=30"),
+        fetch("/api/v1/analytics/dashboard"),
       ]);
-      const [noc, fleet, pay, rev] = await Promise.all([
+      const [noc, fleet, pay, rev, analytics] = await Promise.all([
         nocRes.json(),
         routerRes.json(),
         payRes.json(),
         revRes.json().catch(() => null),
+        analyticsRes.json().catch(() => null),
       ]);
 
       if (noc?.success && noc.data) setStats(noc.data);
@@ -276,6 +284,12 @@ export default function DashboardPage() {
       setPayments(pay?.success ? pay.data : []);
       setServerRevenueBuckets(
         rev?.success && Array.isArray(rev.data?.buckets) ? rev.data.buckets : null
+      );
+      setAnalyticsData(
+        analytics?.success && analytics.data ? (analytics.data as AnalyticsRawData) : null
+      );
+      setAnalyticsError(
+        analytics?.success ? null : analytics?.error || "Analytics could not be loaded."
       );
     } catch (err) {
       console.error("[Dashboard] load failed:", err);
@@ -854,6 +868,13 @@ export default function DashboardPage() {
           </Panel>
         </div>
       </div>
+
+      <AnalyticsOverview
+        period={period}
+        stats={stats}
+        data={analyticsData}
+        error={analyticsError}
+      />
     </AppShell>
   );
 }

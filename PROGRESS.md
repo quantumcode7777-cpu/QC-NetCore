@@ -309,3 +309,30 @@ no tunnel/poller needed):
   Daraja/SMS keys don't exist — platform-global env only (see §16 gaps).
 - Detail API extended: customers (+ exact total), isp_invoices, integrations
   status. List page drawer removed (navigates to workspace instead).
+
+## 19. REA-inspired analytics dashboard (Nov 27)
+
+- Chosen first backlog slice from the Savcon feature-gap report. Implemented
+  in the live clone (`qc-current`) because the older working folder has no Git.
+- New pure aggregation lib `src/lib/analytics.ts`: local-day windows, payment
+  service attribution (subscription overlap → `plans.service_type`, HOTSPOT
+  wins ties), voucher face value, revenue split, ARPU, per-router revenue
+  (customer → `pppoe_accounts.router_id`), top customers, usage-snapshot
+  deltas, hourly Signal Clock averages, byte formatting.
+- New session-scoped read API `GET /api/v1/analytics/dashboard`: raw payments,
+  subscriptions, plans, vouchers, PPPoE accounts, routers, customers; RLS and
+  tenant isolation unchanged; demo mode uses seed rows; partial query failures
+  surface as warnings instead of fake zeros.
+- Dashboard now fetches analytics and renders `AnalyticsOverview` at the
+  bottom: revenue mix + ARPU, revenue per router, data consumption ranges,
+  top users by collections, and Signal Clock.
+- Honest limits: no accounting/session snapshot table exists yet, so
+  "Data consumption per day" and "Signal Clock" show explicit empty states
+  instead of invented history. Live PPPoE rows have no byte/session fields,
+  so those counters are labelled demo-only. Unattributed payments remain
+  visible rather than being forced into a service.
+- Tests: `tests/dashboard-analytics.test.mjs` (8 new cases). `npm test` =
+  113 pass + 1 skip; `tsc --noEmit` clean; `npm run build` clean with the new
+  `/api/v1/analytics/dashboard` route.
+- Next backlog candidates: TR-069/CWMP, SMS campaign centre, or add snapshot
+  writers so usage charts and Signal Clock become live.
