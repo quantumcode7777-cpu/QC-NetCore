@@ -336,3 +336,25 @@ no tunnel/poller needed):
   `/api/v1/analytics/dashboard` route.
 - Next backlog candidates: TR-069/CWMP, SMS campaign centre, or add snapshot
   writers so usage charts and Signal Clock become live.
+
+## 20. Sites + Network Map (Nov 27)
+
+- Backlog item #8 from the REA gap report. Added real POP/site management and
+  a first network map without inventing telemetry.
+- New migration `025_access_points.sql`: org/site/router-linked AP inventory
+  with encrypted-free inventory fields (model, MAC, SSID, channel, signal,
+  coordinates), indexes, RLS + tenant policy. User must apply it in Supabase.
+- New pure helpers `src/lib/sites.ts`: site-card aggregation (routers online,
+  active subscribers, AP counts), shared create/update validation, geographic
+  projection, topology-depth layout, link building, coordinate formatting.
+- New APIs: `GET|POST /api/v1/sites`, `PATCH|DELETE /api/v1/sites/[id]`
+  (DELETE deactivates rather than destroying router/customer history), and
+  `GET /api/v1/network-map`. All are session-scoped and org-filtered; missing
+  AP/topology/GIS tables degrade to warnings, not fake data.
+- New pages `/sites` and `/network-map`, both in the Network nav group:
+  site cards with router/subscriber/AP counts and a create form; SVG topology
+  with site/router/AP/GIS nodes, links, site filter, accessible data table,
+  AP inventory and GIS port-utilisation panels.
+- Demo mode uses new seed sites, routers, APs, topology nodes, and GIS nodes.
+- Tests: `tests/sites-network-map.test.mjs` (5 cases). `npm test` = 118 pass
+  + 1 skip; `tsc --noEmit` clean; `npm run build` verified.

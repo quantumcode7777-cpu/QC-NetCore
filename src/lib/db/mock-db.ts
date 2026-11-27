@@ -19,8 +19,19 @@ import type {
   WorkOrder,
   NetworkAlert,
   NOCStats,
+  AccessPoint,
+  TopologyNode,
+  GisFiberNode,
 } from "../../types/index.ts";
 import type { AnalyticsRawData } from "../analytics.ts";
+import type {
+  AccessPointLite,
+  CustomerLite,
+  GisFiberNodeRow,
+  RouterLite,
+  SiteRow,
+  TopologyNodeRow,
+} from "../sites.ts";
 
 export const SEED_ORGANIZATION: Organization = {
   id: "org-nexanet-01",
@@ -177,6 +188,170 @@ export const SEED_ROUTERS: Router[] = [
     status: "ONLINE",
     lastSeenAt: new Date().toISOString(),
     activeSessions: 18,
+    createdAt: "2025-01-12T08:00:00Z",
+  },
+];
+
+export const SEED_ACCESS_POINTS: AccessPoint[] = [
+  {
+    id: "ap-01",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-01",
+    routerId: "rtr-01",
+    name: "CBD Floor 12 - AP East",
+    model: "UniFi U6-Pro",
+    macAddress: "74:AC:B9:11:22:33",
+    ssid: "QCNETCORE-CBD",
+    channel: "36",
+    signalDbm: -58,
+    status: "ONLINE",
+    createdAt: "2025-01-03T08:00:00Z",
+  },
+  {
+    id: "ap-02",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-01",
+    routerId: "rtr-01",
+    name: "CBD Floor 12 - AP West",
+    model: "UniFi U6-LR",
+    macAddress: "74:AC:B9:44:55:66",
+    ssid: "QCNETCORE-CBD",
+    channel: "149",
+    signalDbm: -64,
+    status: "ONLINE",
+    createdAt: "2025-01-03T08:30:00Z",
+  },
+  {
+    id: "ap-03",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-02",
+    routerId: "rtr-02",
+    name: "Westlands Mast - Sector A",
+    model: "MikroTik cAP ax",
+    macAddress: "18:FD:74:AA:BB:CC",
+    ssid: "QC-WESTLANDS",
+    channel: "11",
+    signalDbm: -71,
+    status: "DEGRADED",
+    createdAt: "2025-01-06T08:00:00Z",
+  },
+  {
+    id: "ap-04",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-03",
+    routerId: "rtr-03",
+    name: "Kilimani Yaya - Lobby AP",
+    model: "MikroTik hAP ax³",
+    macAddress: "48:A9:8A:DD:EE:FF",
+    ssid: "QC-KILIMANI",
+    channel: "6",
+    signalDbm: -52,
+    status: "ONLINE",
+    createdAt: "2025-01-13T08:00:00Z",
+  },
+];
+
+export const SEED_TOPOLOGY_NODES: TopologyNode[] = [
+  {
+    id: "topo-upstream",
+    organizationId: SEED_ORGANIZATION.id,
+    nodeCode: "UPSTREAM-01",
+    name: "Upstream Transit",
+    nodeType: "UPSTREAM_TRANSIT",
+    status: "ONLINE",
+    subscriberCount: 0,
+    createdAt: "2025-01-01T08:00:00Z",
+  },
+  {
+    id: "topo-core",
+    organizationId: SEED_ORGANIZATION.id,
+    nodeCode: "CORE-CCR2004",
+    name: "Core Router - CBD",
+    nodeType: "CORE_ROUTER",
+    parentNodeId: "topo-upstream",
+    status: "ONLINE",
+    subscriberCount: 38,
+    createdAt: "2025-01-02T08:00:00Z",
+  },
+  {
+    id: "topo-west",
+    organizationId: SEED_ORGANIZATION.id,
+    nodeCode: "POP-WESTLANDS",
+    name: "Westlands POP",
+    nodeType: "POP_SECTOR",
+    parentNodeId: "topo-core",
+    siteId: "site-02",
+    status: "ONLINE",
+    subscriberCount: 24,
+    createdAt: "2025-01-05T08:00:00Z",
+  },
+  {
+    id: "topo-kilimani",
+    organizationId: SEED_ORGANIZATION.id,
+    nodeCode: "POP-KILIMANI",
+    name: "Kilimani Base",
+    nodeType: "POP_SECTOR",
+    parentNodeId: "topo-core",
+    siteId: "site-03",
+    status: "DEGRADED",
+    subscriberCount: 19,
+    createdAt: "2025-01-12T08:00:00Z",
+  },
+  {
+    id: "topo-nap-kil-04",
+    organizationId: SEED_ORGANIZATION.id,
+    nodeCode: "NAP-KIL-04",
+    name: "Yaya NAP 04",
+    nodeType: "NAP_SPLITTER",
+    parentNodeId: "topo-kilimani",
+    siteId: "site-03",
+    status: "ONLINE",
+    subscriberCount: 12,
+    createdAt: "2025-01-14T08:00:00Z",
+  },
+];
+
+export const SEED_GIS_FIBER_NODES: GisFiberNode[] = [
+  {
+    id: "gis-01",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-01",
+    code: "POP-CBD-01",
+    name: "CBD Tower POP",
+    nodeKind: "POP_TOWER",
+    latitude: -1.286389,
+    longitude: 36.817223,
+    totalPorts: 48,
+    occupiedPorts: 38,
+    status: "ACTIVE",
+    createdAt: "2025-01-02T08:00:00Z",
+  },
+  {
+    id: "gis-02",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-02",
+    code: "FDC-WST-02",
+    name: "Westlands Cabinet",
+    nodeKind: "FDC_CABINET",
+    latitude: -1.2618,
+    longitude: 36.8044,
+    totalPorts: 24,
+    occupiedPorts: 24,
+    status: "FULL",
+    createdAt: "2025-01-05T08:00:00Z",
+  },
+  {
+    id: "gis-03",
+    organizationId: SEED_ORGANIZATION.id,
+    siteId: "site-03",
+    code: "NAP-KIL-04",
+    name: "Yaya NAP Box",
+    nodeKind: "NAP_FAT_BOX",
+    latitude: -1.2952,
+    longitude: 36.7865,
+    totalPorts: 16,
+    occupiedPorts: 12,
+    status: "ACTIVE",
     createdAt: "2025-01-12T08:00:00Z",
   },
 ];
@@ -832,5 +1007,81 @@ export function getSeedAnalyticsData(): AnalyticsRawData {
     usageSnapshots: [],
     activitySnapshots: [],
     warnings: [],
+  };
+}
+
+/** Demo rows for the Sites and Network Map pages. */
+export function getSeedSitesData(): {
+  sites: SiteRow[];
+  routers: RouterLite[];
+  customers: CustomerLite[];
+  accessPoints: AccessPointLite[];
+} {
+  return {
+    sites: SEED_SITES.map((s) => ({
+      id: s.id,
+      name: s.name,
+      locationDescription: s.locationDescription ?? null,
+      latitude: s.latitude ?? null,
+      longitude: s.longitude ?? null,
+      powerBackupType: s.powerBackupType ?? null,
+      isActive: true,
+      createdAt: s.createdAt,
+    })),
+    routers: SEED_ROUTERS.map((r) => ({
+      id: r.id,
+      siteId: r.siteId ?? null,
+      name: r.name,
+      status: r.status,
+    })),
+    customers: SEED_CUSTOMERS.map((c) => ({
+      id: c.id,
+      siteId: c.siteId ?? null,
+      status: c.status,
+    })),
+    accessPoints: SEED_ACCESS_POINTS.map((a) => ({
+      id: a.id,
+      siteId: a.siteId ?? null,
+      routerId: a.routerId ?? null,
+      name: a.name,
+      status: a.status,
+    })),
+  };
+}
+
+export function getSeedNetworkMapData(): {
+  sites: SiteRow[];
+  routers: RouterLite[];
+  accessPoints: AccessPointLite[];
+  topologyNodes: TopologyNodeRow[];
+  gisNodes: GisFiberNodeRow[];
+} {
+  const base = getSeedSitesData();
+  return {
+    ...base,
+    topologyNodes: SEED_TOPOLOGY_NODES.map((n) => ({
+      id: n.id,
+      nodeCode: n.nodeCode,
+      name: n.name,
+      nodeType: n.nodeType,
+      parentNodeId: n.parentNodeId ?? null,
+      siteId: n.siteId ?? null,
+      status: n.status,
+      subscriberCount: n.subscriberCount,
+      latitude: null,
+      longitude: null,
+    })),
+    gisNodes: SEED_GIS_FIBER_NODES.map((g) => ({
+      id: g.id,
+      code: g.code,
+      name: g.name,
+      nodeKind: g.nodeKind,
+      siteId: g.siteId ?? null,
+      latitude: g.latitude,
+      longitude: g.longitude,
+      totalPorts: g.totalPorts,
+      occupiedPorts: g.occupiedPorts,
+      status: g.status,
+    })),
   };
 }

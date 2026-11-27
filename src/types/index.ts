@@ -53,6 +53,59 @@ export interface Site {
   powerBackupType?: 'UPS' | 'SOLAR' | 'GENERATOR' | 'GRID';
   routerCount?: number;
   customerCount?: number;
+  isActive?: boolean;
+  createdAt: string;
+}
+
+export interface AccessPoint {
+  id: string;
+  organizationId: string;
+  siteId?: string;
+  routerId?: string;
+  name: string;
+  model?: string;
+  macAddress?: string;
+  ssid?: string;
+  channel?: string;
+  signalDbm?: number;
+  status: RouterStatus;
+  latitude?: number;
+  longitude?: number;
+  createdAt: string;
+}
+
+export interface TopologyNode {
+  id: string;
+  organizationId: string;
+  nodeCode: string;
+  name: string;
+  nodeType:
+    | 'UPSTREAM_TRANSIT'
+    | 'CORE_ROUTER'
+    | 'OLT'
+    | 'POP_SECTOR'
+    | 'NAP_SPLITTER'
+    | 'SUBSCRIBER_ONT';
+  parentNodeId?: string;
+  siteId?: string;
+  status: 'ONLINE' | 'DEGRADED' | 'OFFLINE';
+  subscriberCount: number;
+  createdAt: string;
+}
+
+export interface GisFiberNode {
+  id: string;
+  organizationId: string;
+  siteId?: string;
+  code: string;
+  name: string;
+  nodeKind: 'POP_TOWER' | 'FDC_CABINET' | 'NAP_FAT_BOX' | 'SPLICE_CLOSURE';
+  latitude: number;
+  longitude: number;
+  totalPorts: number;
+  occupiedPorts: number;
+  feederCableCode?: string;
+  status: 'ACTIVE' | 'FULL' | 'MAINTENANCE';
   createdAt: string;
 }
 

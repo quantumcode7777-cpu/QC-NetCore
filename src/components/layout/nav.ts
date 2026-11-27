@@ -14,6 +14,8 @@ import {
   MessageSquare,
   Building2,
   Receipt,
+  MapPin,
+  Network,
 } from "lucide-react";
 
 /**
@@ -64,6 +66,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Network",
     items: [
       { href: "/routers", label: "Routers", icon: RouterIcon, keywords: "mikrotik fleet wireguard", ...HIDE_FROM_OWNER },
+      { href: "/sites", label: "Sites", icon: MapPin, keywords: "pops locations coverage power backup", ...HIDE_FROM_OWNER },
+      { href: "/network-map", label: "Network Map", icon: Network, keywords: "topology gis nap fiber access points", ...HIDE_FROM_OWNER },
       { href: "/monitoring", label: "Monitoring", icon: Activity, keywords: "telemetry alerts noc", ...HIDE_FROM_OWNER },
       { href: "/vouchers", label: "Hotspot Vouchers", icon: Ticket, keywords: "hotspot voucher codes", ...HIDE_FROM_OWNER },
     ],

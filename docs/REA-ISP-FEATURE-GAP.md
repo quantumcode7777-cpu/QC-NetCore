@@ -129,7 +129,7 @@ Not present in source (searched `src/**/*.ts(x)`):
 | 5 | **Multi-country currency pricing** | Savcon country switcher; East Africa focus | KES/FX only | P1 | Country selector with currency + FX source; owner pricing rules per ISP country; keep hotspot % and PPPoE $0.25×FX as platform defaults. |
 | 6 | **Support tickets / helpdesk** | Savcon Support Tickets; Tabana Integrated Helpdesk + IVR | `tickets` strings exist but no dedicated page | P1 | Ticket list/create/reply, attach subscriber, SLA state, link from ISP workspace. |
 | 7 | **Messaging campaigns & templates** | Savcon Messaging Center (authenticated): wallet, KES 1/SMS, recipient groups, system templates, merge fields, queued delivery | SMS sender + `/sms` page, no campaigns | P1 | Campaign composer with recipient groups (individual / bulk hotspot / bulk PPPoE), template library with `{{username}}`, `{{package_name}}`, `{{expiry_date}}`, duplicate-number removal, cost estimate, wallet/top-up, queue worker + History delivery reports. |
-| 8 | **Network map + sites/AP inventory** | Savcon Network Map, Sites, Access Points | Routers page only | P2 | Site hierarchy, AP records, simple topology view from existing router data. |
+| 8 | **Network map + sites/AP inventory** | Savcon Network Map, Sites, Access Points | Partial — Sites + map slice implemented; AP table migration pending | P2 | DONE: org-scoped sites CRUD, `/sites` POP cards with router/subscriber/AP counts, `/network-map` SVG topology from `sites`/`routers`/`topology_nodes`/`gis_fiber_nodes`, honest empty states. REMAINING: production apply of migration 025, richer AP provisioning via TR-069. |
 | 9 | **Roaming users / TV & MAC bindings / bundle customization / loyalty** | Savcon hotspot nav | Absent | P2 | Add as hotspot sub-resources after #3; low cost once subscriber model is stable. |
 | 10 | **Voucher agents + import/recycle bin** | Savcon vouchers/agents, Data nav | Batch API exists, no agent channel | P2 | Agent assignment, commission view, CSV import, soft-delete restore. |
 | 11 | **Payment Gateway page (till/paybill reconciliation)** | Savcon Payment Gateway; Tabana MPESA | STK/callback only | P2 | Till/paybill reconciliation queue and unmatched-payment inbox; needs Daraja credentials (#blocked). |
@@ -193,3 +193,24 @@ What is deliberately honest:
 Verification: `tests/dashboard-analytics.test.mjs` (8 cases),
 `npm test` = 113 pass + 1 skip, `tsc --noEmit` clean, and
 `npm run build` clean including the new API route.
+
+## 9. Implemented slice — sites + network map (2026-11-27)
+
+Backlog item #8 was implemented next, in the same live clone.
+
+What is real now:
+- `025_access_points.sql` adds an org/site/router-linked AP inventory table with
+  RLS. It is additive and idempotent but must be applied in Supabase.
+- `GET|POST /api/v1/sites` and `PATCH|DELETE /api/v1/sites/[id]` give ISP
+  operators real POP records; delete deactivates so router/customer history is
+  preserved. `GET /api/v1/network-map` merges sites, routers, APs, topology
+  nodes, and GIS fiber nodes into deterministic SVG-ready nodes/links.
+- `/sites` shows one card per POP with routers online, active subscribers, AP
+  count, coordinates, power backup, create and deactivate actions.
+- `/network-map` renders a site-filterable topology, AP inventory, GIS port
+  utilisation, and a screen-reader table. Missing AP/topology/GIS data yields
+  honest empty states/warnings; there are no invented links or coordinates.
+
+Verification: `tests/sites-network-map.test.mjs` (5 cases),
+`npm test` = 118 pass + 1 skip, `tsc --noEmit` clean,
+`npm run build` clean including both new pages and API routes.

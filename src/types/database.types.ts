@@ -151,6 +151,142 @@ export interface Database {
           { foreignKeyName: 'sites_organization_id_fkey'; columns: ['organization_id']; referencedRelation: 'organizations'; referencedColumns: ['id'] }
         ]
       }
+      access_points: {
+        Row: {
+          id: string
+          organization_id: string
+          site_id: string | null
+          router_id: string | null
+          name: string
+          model: string | null
+          mac_address: string | null
+          ssid: string | null
+          channel: string | null
+          signal_dbm: number | null
+          status: 'ONLINE' | 'OFFLINE' | 'DEGRADED' | 'UNREACHABLE'
+          latitude: number | null
+          longitude: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          site_id?: string | null
+          router_id?: string | null
+          name: string
+          model?: string | null
+          mac_address?: string | null
+          ssid?: string | null
+          channel?: string | null
+          signal_dbm?: number | null
+          status?: 'ONLINE' | 'OFFLINE' | 'DEGRADED' | 'UNREACHABLE'
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          site_id?: string | null
+          router_id?: string | null
+          name?: string
+          model?: string | null
+          mac_address?: string | null
+          ssid?: string | null
+          channel?: string | null
+          signal_dbm?: number | null
+          status?: 'ONLINE' | 'OFFLINE' | 'DEGRADED' | 'UNREACHABLE'
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      topology_nodes: {
+        Row: {
+          id: string
+          organization_id: string
+          node_code: string
+          name: string
+          node_type: string
+          parent_node_id: string | null
+          status: string
+          subscriber_count: number
+          latency_ms: number
+          utilization_percent: number
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          node_code: string
+          name: string
+          node_type: string
+          parent_node_id?: string | null
+          status?: string
+          subscriber_count?: number
+          latency_ms?: number
+          utilization_percent?: number
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          node_type?: string
+          parent_node_id?: string | null
+          status?: string
+          subscriber_count?: number
+          latency_ms?: number
+          utilization_percent?: number
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      gis_fiber_nodes: {
+        Row: {
+          id: string
+          organization_id: string
+          site_id: string | null
+          code: string
+          name: string
+          node_kind: string
+          latitude: number
+          longitude: number
+          total_ports: number
+          occupied_ports: number
+          feeder_cable_code: string | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          site_id?: string | null
+          code: string
+          name: string
+          node_kind: string
+          latitude: number
+          longitude: number
+          total_ports?: number
+          occupied_ports?: number
+          feeder_cable_code?: string | null
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          site_id?: string | null
+          name?: string
+          node_kind?: string
+          latitude?: number
+          longitude?: number
+          total_ports?: number
+          occupied_ports?: number
+          feeder_cable_code?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       routers: {
         Row: {
           id: string
@@ -775,6 +911,9 @@ export type TablesUpdate<T extends keyof Database['public']['Tables']> =
 export type OrganizationRow = Tables<'organizations'>
 export type ProfileRow = Tables<'profiles'>
 export type SiteRow = Tables<'sites'>
+export type AccessPointRow = Tables<'access_points'>
+export type TopologyNodeRow = Tables<'topology_nodes'>
+export type GisFiberNodeRow = Tables<'gis_fiber_nodes'>
 export type RouterRow = Tables<'routers'>
 export type PlanRow = Tables<'plans'>
 export type CustomerRow = Tables<'customers'>
